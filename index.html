@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Cuty - Live Video Chat</title>
+  <meta name="description" content="Cuty - Live Video Chat app for random video matching, 1-on-1 calls, and direct messaging." />
+  <meta name="theme-color" content="#0d0714" />
+  <link rel="manifest" href="manifest.json" />
+  <!-- Google Fonts & Lucide Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="frame-mode">
+
+  <!-- Floating Frame Controls (Desktop/Web Mode Toggle) -->
+  <div class="frame-toggle-bar">
+    <button id="toggle-frame-btn" class="btn-frame-toggle">
+      <i data-lucide="smartphone"></i>
+      <span id="frame-toggle-text">Toggle Fullscreen View</span>
+    </button>
+  </div>
+
+  <!-- Android Phone Mockup Container -->
+  <div class="android-device" id="android-device">
+    <!-- Phone Hardware Details -->
+    <div class="device-bezel">
+      <div class="camera-punchhole"></div>
+      <div class="speaker-earpiece"></div>
+    </div>
+
+    <!-- Phone Screen Content -->
+    <div class="screen-container">
+
+      <!-- Android Top Status Bar -->
+      <div class="status-bar">
+        <span class="status-time" id="status-clock">14:35</span>
+        <div class="status-icons">
+          <i data-lucide="wifi"></i>
+          <span class="badge-5g">5G</span>
+          <i data-lucide="battery"></i>
+        </div>
+      </div>
+
+      <!-- App Header Bar -->
+      <header class="app-header">
+        <div class="brand-logo">
+          <span class="logo-icon">💖</span>
+          <h1 class="logo-text">Cuty <span class="logo-badge">LIVE</span></h1>
+        </div>
+        <div class="header-actions">
+          <button class="coin-pill-btn" id="header-coin-btn">
+            <span class="coin-icon">⚡</span>
+            <span class="coin-amount" id="coin-balance-display">30</span>
+            <span class="coin-unit">coins</span>
+            <i data-lucide="plus-circle" class="coin-add-icon"></i>
+          </button>
+          <button class="vip-badge-btn" id="header-vip-btn">
+            <i data-lucide="crown"></i>
+            <span>VIP</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Content Views Container -->
+      <main class="views-wrapper">
+
+        <!-- ================= TAB 1: RANDOM MATCH (MAIN MENU) ================= -->
+        <section id="view-random" class="app-view active">
+          <!-- Camera Background / Matching Radar -->
+          <div class="match-stage">
+            <!-- Local Preview Video Stream -->
+            <video id="radar-camera-video" class="radar-video-preview" autoplay playsinline muted></video>
+            <div class="camera-overlay-gradient"></div>
+
+            <!-- Radar Pulse Effect when Searching -->
+            <div class="radar-container" id="radar-container">
+              <div class="radar-ring ring-1"></div>
+              <div class="radar-ring ring-2"></div>
+              <div class="radar-ring ring-3"></div>
+              <div class="radar-center-avatar">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80" alt="Your Avatar" id="radar-user-avatar" />
+                <div class="radar-pulse-dot"></div>
+              </div>
+            </div>
+
+            <!-- Status Message Box -->
+            <div class="match-status-card" id="match-status-card">
+              <div class="status-text" id="match-status-text">Ready to meet cute people?</div>
+              <div class="substatus-text" id="match-substatus-text">1 coin = 1 minute live talk</div>
+            </div>
+
+            <!-- Filter Selection Pills -->
+            <div class="match-filters">
+              <div class="filter-group">
+                <label><i data-lucide="users"></i> Gender</label>
+                <div class="filter-tabs" id="gender-filter-tabs">
+                  <button class="filter-tab active" data-gender="both">Both</button>
+                  <button class="filter-tab" data-gender="female">Female 👩</button>
+                  <button class="filter-tab" data-gender="male">Male 👨</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Main Start Match Action Button -->
+            <div class="match-action-area">
+              <button id="start-match-btn" class="btn-start-match">
+                <div class="btn-glow-layer"></div>
+                <i data-lucide="video" class="btn-icon"></i>
+                <span id="start-match-btn-text">Start Random Match</span>
+                <i data-lucide="sparkles" class="sparkle-icon"></i>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= TAB 2: PEOPLE (DIRECT DM & CALL LIST) ================= -->
+        <section id="view-people" class="app-view">
+          <div class="people-header">
+            <h2>Online People</h2>
+            <p class="subtitle">Direct text message or video call instantly</p>
+            
+            <!-- Category Tabs -->
+            <div class="category-pills" id="people-category-pills">
+              <button class="pill active" data-cat="all">All (24)</button>
+              <button class="pill" data-cat="online">🟢 Online</button>
+              <button class="pill" data-cat="popular">🔥 Popular</button>
+              <button class="pill" data-cat="female">👩 Girls</button>
+              <button class="pill" data-cat="male">👨 Guys</button>
+            </div>
+          </div>
+
+          <!-- People List Grid -->
+          <div class="people-scroll-container">
+            <div class="people-grid" id="people-grid-container">
+              <!-- Dynamically Populated Cards -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= TAB 3: PROFILE & COINS ================= -->
+        <section id="view-profile" class="app-view">
+          <div class="profile-scroll-container">
+            
+            <!-- User Header Card -->
+            <div class="profile-card">
+              <div class="profile-avatar-wrapper">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80" alt="Profile Avatar" class="profile-avatar" id="my-profile-avatar" />
+                <span class="online-indicator"></span>
+              </div>
+              <div class="profile-info">
+                <div class="profile-name-row">
+                  <h3 id="my-profile-name">Alex Johnson</h3>
+                  <span class="gender-age-badge female">♀ 22</span>
+                </div>
+                <p class="profile-id">ID: 89402194 • <span class="flag">🇺🇸 USA</span></p>
+                <div class="profile-tags">
+                  <span class="tag">✨ Friendly</span>
+                  <span class="tag">🎵 Music Lover</span>
+                  <span class="tag">✈️ Travel</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Wallet & Coins Banner -->
+            <div class="wallet-card">
+              <div class="wallet-header">
+                <div class="wallet-title">
+                  <i data-lucide="zap" class="zap-icon"></i>
+                  <div>
+                    <h4>My Talking Balance</h4>
+                    <p class="rate-info">1 Coin = 1 Minute of live video call</p>
+                  </div>
+                </div>
+                <div class="balance-badge">
+                  <span id="profile-coin-balance">30</span>
+                  <span class="balance-unit">Coins</span>
+                </div>
+              </div>
+              <div class="wallet-mins-estimate">
+                <span>⏱️ Equivalent to <strong><span id="profile-mins-display">30</span> minutes</strong> of continuous calls</span>
+              </div>
+              <button class="btn-buy-coins" id="profile-buy-coins-btn">
+                <i data-lucide="shopping-bag"></i> Buy Coins
+              </button>
+            </div>
+
+            <!-- VIP Membership Banner -->
+            <div class="vip-card">
+              <div class="vip-content">
+                <div class="vip-crown"><i data-lucide="crown"></i></div>
+                <div class="vip-text">
+                  <h4>Cuty VIP Membership</h4>
+                  <ul>
+                    <li>✓ Unlimited gender match filter</li>
+                    <li>✓ Gold profile highlight & VIP badge</li>
+                    <li>✓ Priority fast matching queue</li>
+                  </ul>
+                </div>
+              </div>
+              <button class="btn-upgrade-vip" id="profile-vip-btn">
+                Upgrade to VIP ($4.99/mo)
+              </button>
+            </div>
+
+            <!-- Recent Call History -->
+            <div class="section-title">
+              <i data-lucide="clock"></i> Recent Call History
+            </div>
+            <div class="call-history-list" id="call-history-list">
+              <!-- Populated by JS -->
+            </div>
+
+          </div>
+        </section>
+
+      </main>
+
+      <!-- Bottom Navigation Bar (3 Tabs: Random / People / Profile) -->
+      <nav class="bottom-nav">
+        <button class="nav-tab active" data-target="view-random" id="nav-tab-random">
+          <div class="nav-icon-wrapper">
+            <i data-lucide="sparkles"></i>
+          </div>
+          <span class="nav-label">Random</span>
+        </button>
+
+        <button class="nav-tab" data-target="view-people" id="nav-tab-people">
+          <div class="nav-icon-wrapper">
+            <i data-lucide="users"></i>
+            <span class="nav-badge" id="people-online-count">24</span>
+          </div>
+          <span class="nav-label">People</span>
+        </button>
+
+        <button class="nav-tab" data-target="view-profile" id="nav-tab-profile">
+          <div class="nav-icon-wrapper">
+            <i data-lucide="user"></i>
+          </div>
+          <span class="nav-label">Profile</span>
+        </button>
+      </nav>
+
+    </div> <!-- End Screen Container -->
+  </div> <!-- End Android Device -->
+
+  <!-- ================= FULLSCREEN LIVE VIDEO CALL MODAL ================= -->
+  <div id="call-modal" class="call-modal-overlay">
+    <div class="call-container">
+
+      <!-- Remote Partner Fullscreen Video -->
+      <div class="remote-video-wrapper">
+        <video id="remote-video-element" class="remote-video" autoplay playsinline loop></video>
+        <div id="simulated-canvas-wrapper" class="simulated-canvas-wrapper">
+          <canvas id="simulated-video-canvas"></canvas>
+        </div>
+        
+        <!-- Animated Particles / Floating Hearts Layer -->
+        <canvas id="call-fx-canvas" class="fx-canvas"></canvas>
+      </div>
+
+      <!-- Floating PIP Local Webcam Stream -->
+      <div class="local-pip-wrapper" id="local-pip">
+        <video id="local-pip-video" class="local-pip-video" autoplay playsinline muted></video>
+        <span class="pip-label">You</span>
+        <button class="pip-flip-btn" id="pip-flip-btn" title="Flip Camera">
+          <i data-lucide="refresh-cw"></i>
+        </button>
+      </div>
+
+      <!-- In-Call Top Info Bar -->
+      <div class="call-top-bar">
+        <div class="partner-meta">
+          <img src="" alt="Partner" class="partner-avatar" id="call-partner-avatar" />
+          <div class="partner-details">
+            <div class="partner-name-row">
+              <span class="partner-name" id="call-partner-name">Elena Rostova</span>
+              <span class="partner-flag" id="call-partner-flag">🇷🇺</span>
+            </div>
+            <span class="partner-location" id="call-partner-location">Moscow, Russia</span>
+          </div>
+          <button class="btn-report-partner" id="call-btn-report" title="Report & Block">
+            <i data-lucide="shield-alert"></i>
+          </button>
+        </div>
+
+        <!-- In-Call Coin & Timer Counter (1 Coin = 1 Minute) -->
+        <div class="call-timer-pill">
+          <div class="timer-display" id="call-timer-display">00:00</div>
+          <div class="coin-rate-tag">
+            <span class="coin-icon">⚡</span>
+            <span id="call-coin-balance">30</span> left
+          </div>
+        </div>
+      </div>
+
+      <!-- In-Call Floating Message Overlay -->
+      <div class="call-chat-overlay" id="call-chat-overlay">
+        <!-- Messages appended dynamically -->
+      </div>
+
+      <!-- In-Call Bottom Controls Bar -->
+      <div class="call-bottom-bar">
+        <!-- Live Chat Input Bar -->
+        <div class="chat-input-row">
+          <input type="text" id="call-chat-input" placeholder="Say something nice..." maxlength="120" />
+          <button class="btn-send-chat" id="call-send-chat-btn">
+            <i data-lucide="send"></i>
+          </button>
+        </div>
+
+        <!-- Quick Action Buttons -->
+        <div class="call-actions-row">
+          <button class="call-action-btn" id="call-btn-mute" title="Mute Audio">
+            <i data-lucide="mic"></i>
+          </button>
+
+          <button class="call-action-btn" id="call-btn-filter" title="Beauty Filter">
+            <i data-lucide="wand-2"></i>
+            <span class="btn-subtext">Beauty</span>
+          </button>
+
+          <button class="call-action-btn gift-btn" id="call-btn-gift" title="Send Gift">
+            <i data-lucide="gift"></i>
+            <span class="btn-subtext">Gifts</span>
+          </button>
+
+          <button class="call-action-btn next-btn" id="call-btn-next" title="Next Match">
+            <i data-lucide="skip-forward"></i>
+            <span class="btn-subtext">Next</span>
+          </button>
+
+          <button class="call-action-btn end-btn" id="call-btn-end" title="End Call">
+            <i data-lucide="phone-off"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Beauty Filter Picker Sheet -->
+      <div class="filter-sheet" id="filter-sheet">
+        <div class="sheet-header">
+          <span>✨ Select Beauty Filter</span>
+          <button id="close-filter-sheet"><i data-lucide="x"></i></button>
+        </div>
+        <div class="filter-options">
+          <button class="filter-opt active" data-filter="normal">Normal</button>
+          <button class="filter-opt" data-filter="smooth">🌸 Smooth Skin</button>
+          <button class="filter-opt" data-filter="warm">☀️ Warm Sunset</button>
+          <button class="filter-opt" data-filter="cyber">⚡ Cyber Neon</button>
+          <button class="filter-opt" data-filter="vintage">📷 Vintage Retro</button>
+        </div>
+      </div>
+
+      <!-- Gift Picker Sheet -->
+      <div class="gift-sheet" id="gift-sheet">
+        <div class="sheet-header">
+          <span>🎁 Send a Gift</span>
+          <button id="close-gift-sheet"><i data-lucide="x"></i></button>
+        </div>
+        <div class="gift-grid">
+          <button class="gift-card" data-gift="rose" data-cost="1">
+            <span class="gift-emoji">🌹</span>
+            <span class="gift-name">Rose</span>
+            <span class="gift-cost">⚡ 1 coin</span>
+          </button>
+          <button class="gift-card" data-gift="diamond" data-cost="5">
+            <span class="gift-emoji">💎</span>
+            <span class="gift-name">Diamond</span>
+            <span class="gift-cost">⚡ 5 coins</span>
+          </button>
+          <button class="gift-card" data-gift="crown" data-cost="10">
+            <span class="gift-emoji">👑</span>
+            <span class="gift-name">Crown</span>
+            <span class="gift-cost">⚡ 10 coins</span>
+          </button>
+          <button class="gift-card" data-gift="car" data-cost="25">
+            <span class="gift-emoji">🏎️</span>
+            <span class="gift-name">Supercar</span>
+            <span class="gift-cost">⚡ 25 coins</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= DIRECT MESSAGE (DM) MODAL ================= -->
+  <div id="dm-modal" class="dm-modal-overlay">
+    <div class="dm-modal-container">
+      <div class="dm-header">
+        <button class="btn-back-dm" id="dm-back-btn">
+          <i data-lucide="chevron-left"></i>
+        </button>
+        <div class="dm-user-meta">
+          <img src="" alt="Chat Partner" id="dm-partner-avatar" class="dm-avatar" />
+          <div>
+            <h4 id="dm-partner-name">Elena Rostova</h4>
+            <span class="dm-status">🟢 Online now</span>
+          </div>
+        </div>
+        <button class="dm-call-btn" id="dm-call-trigger-btn">
+          <i data-lucide="video"></i>
+          <span>Call (1⚡/m)</span>
+        </button>
+      </div>
+
+      <!-- Message History Container -->
+      <div class="dm-messages-container" id="dm-messages-list">
+        <!-- Message bubbles populated dynamically -->
+      </div>
+
+      <!-- DM Input Footer -->
+      <div class="dm-footer">
+        <input type="text" id="dm-input" placeholder="Write a message..." />
+        <button class="btn-send-dm" id="dm-send-btn">
+          <i data-lucide="send"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= COIN STORE & PURCHASING MODAL ================= -->
+  <div id="coin-store-modal" class="store-modal-overlay">
+    <div class="store-modal-card">
+      <div class="store-header">
+        <div class="store-title">
+          <span class="store-icon">⚡</span>
+          <h3>Cuty Coin Store</h3>
+        </div>
+        <button class="btn-close-store" id="close-store-btn"><i data-lucide="x"></i></button>
+      </div>
+
+      <div class="store-banner">
+        <p class="banner-heading">⚡ 1 Coin = 1 Minute of Talk Time</p>
+        <p class="banner-sub">Recharge now and start instant live video calls!</p>
+      </div>
+
+      <!-- Coin Package List -->
+      <div class="coin-packages-list">
+        <div class="coin-pack-item" data-coins="10" data-price="0.99">
+          <div class="pack-left">
+            <span class="pack-coins">⚡ 10 Coins</span>
+            <span class="pack-mins">= 10 Minutes Talking</span>
+          </div>
+          <button class="pack-buy-btn">$0.99</button>
+        </div>
+
+        <div class="coin-pack-item popular" data-coins="50" data-price="3.99">
+          <div class="popular-tag">MOST POPULAR</div>
+          <div class="pack-left">
+            <span class="pack-coins">⚡ 50 Coins</span>
+            <span class="pack-mins">= 50 Minutes Talking</span>
+          </div>
+          <button class="pack-buy-btn">$3.99</button>
+        </div>
+
+        <div class="coin-pack-item" data-coins="100" data-price="6.99">
+          <div class="pack-left">
+            <span class="pack-coins">⚡ 100 Coins</span>
+            <span class="pack-mins">= 100 Minutes (+10 Free)</span>
+          </div>
+          <button class="pack-buy-btn">$6.99</button>
+        </div>
+
+        <div class="coin-pack-item best-value" data-coins="300" data-price="19.99">
+          <div class="value-tag">BEST VALUE</div>
+          <div class="pack-left">
+            <span class="pack-coins">⚡ 300 Coins</span>
+            <span class="pack-mins">= 5 Hours Unlimited</span>
+          </div>
+          <button class="pack-buy-btn">$19.99</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="toast-notification" class="toast-notification"></div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
