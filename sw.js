@@ -1,11 +1,13 @@
 /* Cuty Live Video Chat - Service Worker */
-const CACHE_NAME = 'cuty-live-v1';
+const CACHE_NAME = 'cuty-live-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/styles.css',
   '/app.js',
-  '/manifest.json'
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png'
 ];
 
 self.addEventListener('install', (event) => {
