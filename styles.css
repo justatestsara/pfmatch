@@ -117,6 +117,22 @@ body.fullscreen-mode .frame-toggle-bar {
   margin-bottom: 0;
 }
 
+/* Auto-fullscreen on mobile devices and standalone PWA installations */
+@media (max-width: 768px), (display-mode: standalone) {
+  .frame-toggle-bar {
+    display: none !important;
+  }
+  .android-device {
+    width: 100vw !important;
+    height: 100vh !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  .device-bezel {
+    display: none !important;
+  }
+}
+
 /* Device Hardware Features */
 .device-bezel {
   position: absolute;
