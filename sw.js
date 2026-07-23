@@ -1,9 +1,9 @@
 /* Cuty Live Video Chat - Service Worker */
-const CACHE_NAME = 'cuty-live-v2';
+const CACHE_NAME = 'cuty-live-v3';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
-  '/styles.css',
+  '/styles.css?v=2',
   '/app.js',
   '/manifest.json',
   '/icon-192.png',
