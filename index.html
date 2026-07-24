@@ -244,6 +244,90 @@
         </button>
       </nav>
 
+      <!-- ================= AUTHENTICATION OVERLAY ================= -->
+      <div id="auth-overlay" class="auth-overlay active">
+        <div class="auth-card">
+          <button class="btn-config-gear" id="btn-auth-config" title="Database Settings">
+            <i data-lucide="settings"></i>
+          </button>
+          
+          <div class="auth-header">
+            <span class="auth-logo">💖</span>
+            <h2>Cuty Video Chat</h2>
+            <p>Connect with database to start</p>
+          </div>
+
+          <!-- Tab Selection (Login / Register) -->
+          <div class="auth-tabs">
+            <button class="auth-tab-btn active" id="tab-login-btn">Login</button>
+            <button class="auth-tab-btn" id="tab-register-btn">Register</button>
+          </div>
+
+          <!-- Login Form -->
+          <form id="login-form" class="auth-form active">
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="login-email" required placeholder="name@email.com" />
+            </div>
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" id="login-password" required placeholder="••••••••" />
+            </div>
+            <button type="submit" class="btn-auth-submit">Sign In</button>
+          </form>
+
+          <!-- Register Form -->
+          <form id="register-form" class="auth-form">
+            <div class="form-group">
+              <label>Username</label>
+              <input type="text" id="reg-username" required placeholder="CutyUser" />
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="reg-email" required placeholder="name@email.com" />
+            </div>
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" id="reg-password" required placeholder="At least 6 characters" minlength="6" />
+            </div>
+            <div class="form-group">
+              <label>Gender</label>
+              <select id="reg-gender">
+                <option value="female">Female 👩</option>
+                <option value="male">Male 👨</option>
+              </select>
+            </div>
+            <button type="submit" class="btn-auth-submit">Create Account</button>
+          </form>
+
+          <!-- Guest Login -->
+          <div class="auth-divider"><span>or</span></div>
+          <button class="btn-guest-login" id="btn-guest-login">
+            <i data-lucide="user-check"></i> Play as Guest
+          </button>
+        </div>
+
+        <!-- Supabase Settings Modal Overlay -->
+        <div id="auth-config-modal" class="auth-config-modal">
+          <div class="config-modal-card">
+            <h4>Supabase Project Settings</h4>
+            <p class="config-subtitle">Link your own real-time database credentials</p>
+            <div class="form-group">
+              <label>Supabase URL</label>
+              <input type="text" id="supabase-url-input" placeholder="https://xxxx.supabase.co" />
+            </div>
+            <div class="form-group">
+              <label>Supabase Anon Key</label>
+              <input type="password" id="supabase-key-input" placeholder="eyJhbGciOi..." />
+            </div>
+            <div class="config-actions">
+              <button class="btn-config-save" id="btn-config-save">Save & Connect</button>
+              <button class="btn-config-cancel" id="btn-config-cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div> <!-- End Screen Container -->
   </div> <!-- End Android Device -->
 
@@ -481,6 +565,7 @@
   <div id="toast-notification" class="toast-notification"></div>
 
   <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script src="app.js"></script>
 </body>

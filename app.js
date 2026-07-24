@@ -256,7 +256,21 @@ document.addEventListener('DOMContentLoaded', () => {
     dmInput: document.getElementById('dm-input'),
     dmSendBtn: document.getElementById('dm-send-btn'),
 
-    toast: document.getElementById('toast-notification')
+    toast: document.getElementById('toast-notification'),
+
+    // Supabase Auth Elements
+    authOverlay: document.getElementById('auth-overlay'),
+    authConfigModal: document.getElementById('auth-config-modal'),
+    btnAuthConfig: document.getElementById('btn-auth-config'),
+    supabaseUrlInput: document.getElementById('supabase-url-input'),
+    supabaseKeyInput: document.getElementById('supabase-key-input'),
+    btnConfigSave: document.getElementById('btn-config-save'),
+    btnConfigCancel: document.getElementById('btn-config-cancel'),
+    loginForm: document.getElementById('login-form'),
+    registerForm: document.getElementById('register-form'),
+    btnGuestLogin: document.getElementById('btn-guest-login'),
+    tabLoginBtn: document.getElementById('tab-login-btn'),
+    tabRegisterBtn: document.getElementById('tab-register-btn')
   };
 
   // ================= INITIALIZATION =================
@@ -269,8 +283,262 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCallHistory();
     setupEventListeners();
     initSocketServer();
+    initSupabase();
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
+    }
+  }
+
+  }
+
+  // ================= SUPABASE CLIENT & AUTHENTICATION =================
+  let supabase = null;
+  let currentUser = null;
+  let myProfile = null;
+
+  function initSupabase() {
+    const url = localStorage.getItem('supabase_url');
+    const key = localStorage.getItem('supabase_key');
+
+    if (url && key && typeof supabasejs !== 'undefined') {
+      try {
+        supabase = supabasejs.createClient(url, key);
+        console.log('[Cuty Supabase] Client initialized successfully');
+        
+        // Listen to Auth events
+        supabase.auth.onAuthStateChange(async (event, session) => {
+          if (session) {
+            currentUser = session.user;
+            await loadUserProfile(currentUser.id);
+            elements.authOverlay.classList.remove('active');
+            
+            // Subscribe to real-time message tables
+            subscribeToDMMessages();
+          } else {
+            currentUser = null;
+            myProfile = null;
+            elements.authOverlay.classList.add('active');
+          }
+        });
+
+        // Trigger immediate check
+        checkActiveSession();
+
+      } catch (err) {
+        console.log('[Cuty Supabase] Failed to initialize:', err);
+        elements.authOverlay.classList.add('active');
+      }
+    } else {
+      console.log('[Cuty Supabase] Credentials missing. Open settings to connect.');
+      elements.authOverlay.classList.add('active');
+    }
+  }
+
+  async function checkActiveSession() {
+    if (!supabase) return;
+    const { data } = await supabase.auth.getSession();
+    if (data.session) {
+      currentUser = data.session.user;
+      await loadUserProfile(currentUser.id);
+      elements.authOverlay.classList.remove('active');
+    }
+  }
+
+  async function loadUserProfile(userId) {
+    if (!supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        myProfile = data;
+        state.coins = data.coins;
+        state.isVip = data.is_vip;
+        renderCoinBalance();
+
+        // Update UI info
+        document.getElementById('my-profile-name').textContent = data.username;
+        document.getElementById('my-profile-avatar').src = data.avatar_url;
+        document.getElementById('radar-user-avatar').src = data.avatar_url;
+        
+        // Update online status in database
+        await supabase
+          .from('profiles')
+          .update({ online_status: 'online', updated_at: new Date() })
+          .eq('id', userId);
+      }
+    } catch (err) {
+      console.log('Error loading profile:', err.message);
+    }
+  }
+
+  async function updateDBCoins(newCoins) {
+    if (!supabase || !currentUser) return;
+    try {
+      await supabase
+        .from('profiles')
+        .update({ coins: newCoins })
+        .eq('id', currentUser.id);
+    } catch (err) {
+      console.log('Failed to save coin balance to Supabase:', err);
+    }
+  }
+
+  async function updateDBVipStatus() {
+    if (!supabase || !currentUser) return;
+    try {
+      await supabase
+        .from('profiles')
+        .update({ is_vip: true })
+        .eq('id', currentUser.id);
+    } catch (err) {
+      console.log('Failed to save VIP status to Supabase:', err);
+    }
+  }
+
+  // Auth Operations
+  async function handleSignUp(email, password, username, gender) {
+    if (!supabase) {
+      showToast('⚠️ Please link your Supabase database first!');
+      return;
+    }
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username,
+            gender,
+            country: 'Global',
+            avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'
+          }
+        }
+      });
+
+      if (error) throw error;
+      showToast('Account created successfully! Logging in...');
+    } catch (err) {
+      showToast(`❌ Error: ${err.message}`);
+    }
+  }
+
+  async function handleSignIn(email, password) {
+    if (!supabase) {
+      showToast('⚠️ Please link your Supabase database first!');
+      return;
+    }
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) throw error;
+      showToast('Logged in successfully!');
+    } catch (err) {
+      showToast(`❌ Login failed: ${err.message}`);
+    }
+  }
+
+  async function handleGuestLogin() {
+    const guestId = Math.floor(Math.random() * 1000000);
+    const guestEmail = `guest_${guestId}@cutylive.app`;
+    const guestPassword = `guest_pass_${guestId}`;
+    const guestName = `Guest_${guestId}`;
+    const randomGender = Math.random() > 0.5 ? 'female' : 'male';
+
+    await handleSignUp(guestEmail, guestPassword, guestName, randomGender);
+    setTimeout(() => {
+      handleSignIn(guestEmail, guestPassword);
+    }, 1200);
+  }
+
+  // Direct Message Sync
+  async function dbSendDM(receiverUserId, text) {
+    if (!supabase || !currentUser) return;
+    try {
+      await supabase
+        .from('messages')
+        .insert({
+          sender_id: currentUser.id,
+          receiver_id: receiverUserId,
+          text: text
+        });
+    } catch (err) {
+      console.log('Failed to save message to database:', err);
+    }
+  }
+
+  async function dbLoadDMHistory(partnerUserId) {
+    if (!supabase || !currentUser) return;
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${partnerUserId}),and(sender_id.eq.${partnerUserId},receiver_id.eq.${currentUser.id})`)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      if (data) {
+        state.dmMessages[partnerUserId] = data.map(m => ({
+          sender: m.sender_id === currentUser.id ? 'me' : 'them',
+          text: m.text
+        }));
+        renderDMMessages();
+      }
+    } catch (err) {
+      console.log('Failed to fetch messages:', err);
+    }
+  }
+
+  function subscribeToDMMessages() {
+    if (!supabase || !currentUser) return;
+    supabase.channel('messages-realtime-channel')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
+        (payload) => {
+          const msg = payload.new;
+          if (msg.receiver_id === currentUser.id || msg.sender_id === currentUser.id) {
+            const partnerId = msg.sender_id === currentUser.id ? msg.receiver_id : msg.sender_id;
+            if (!state.dmMessages[partnerId]) state.dmMessages[partnerId] = [];
+            
+            // Check if already present to avoid duplicates
+            const exists = state.dmMessages[partnerId].some(m => m.text === msg.text);
+            if (!exists) {
+              state.dmMessages[partnerId].push({
+                sender: msg.sender_id === currentUser.id ? 'me' : 'them',
+                text: msg.text
+              });
+              if (state.dmPartner && state.dmPartner.id === partnerId) {
+                renderDMMessages();
+              }
+            }
+          }
+        }
+      )
+      .subscribe();
+  }
+
+  // Report Blocks Persistence
+  async function dbBlockUser(blockedUserId) {
+    if (!supabase || !currentUser) return;
+    try {
+      await supabase
+        .from('blocks')
+        .insert({
+          blocker_id: currentUser.id,
+          blocked_id: blockedUserId
+        });
+    } catch (err) {
+      console.log('Block record failed:', err);
     }
   }
 
@@ -671,6 +939,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (state.callDurationSeconds % 60 === 0 && state.callDurationSeconds > 0) {
         state.coins--;
         renderCoinBalance();
+        updateDBCoins(state.coins);
         showToast('⚡ 1 Coin deducted (1 min call time)');
 
         // Out of coins check
@@ -743,6 +1012,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     state.coins -= cost;
     renderCoinBalance();
+    updateDBCoins(state.coins);
     elements.giftSheet.classList.remove('active');
     SoundFX.playGiftPop();
 
@@ -880,13 +1150,17 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.dmPartnerName.textContent = person.name;
     elements.dmPartnerAvatar.src = person.avatar;
 
-    if (!state.dmMessages[person.id]) {
-      state.dmMessages[person.id] = [
-        { sender: 'them', text: `Hey! Thanks for visiting my profile. How is your day going? 😊` }
-      ];
+    if (supabase && currentUser) {
+      dbLoadDMHistory(person.id);
+    } else {
+      if (!state.dmMessages[person.id]) {
+        state.dmMessages[person.id] = [
+          { sender: 'them', text: `Hey! Thanks for visiting my profile. How is your day going? 😊` }
+        ];
+      }
+      renderDMMessages();
     }
 
-    renderDMMessages();
     elements.dmModal.classList.add('active');
   }
 
@@ -909,26 +1183,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const text = elements.dmInput.value.trim();
     if (!text || !state.dmPartner) return;
 
-    state.dmMessages[state.dmPartner.id].push({ sender: 'me', text });
-    elements.dmInput.value = '';
-    renderDMMessages();
-    SoundFX.playBeep(750, 'sine', 0.08, 0.1);
+    if (supabase && currentUser) {
+      // Save directly to Supabase table
+      dbSendDM(state.dmPartner.id, text);
+    } else {
+      if (!state.dmMessages[state.dmPartner.id]) state.dmMessages[state.dmPartner.id] = [];
+      state.dmMessages[state.dmPartner.id].push({ sender: 'me', text });
+      renderDMMessages();
+      SoundFX.playBeep(750, 'sine', 0.08, 0.1);
 
-    // Simulated reply
-    setTimeout(() => {
-      const replies = [
-        "That's so cool! Tell me more ✨",
-        "Aww nice! Do you want to jump on a video call? 📹",
-        "Haha love that! 😄 What music do you listen to?",
-        "Awesome! I'm online right now!"
-      ];
-      const randomReply = replies[Math.floor(Math.random() * replies.length)];
-      if (state.dmPartner && state.dmMessages[state.dmPartner.id]) {
-        state.dmMessages[state.dmPartner.id].push({ sender: 'them', text: randomReply });
-        renderDMMessages();
-        SoundFX.playBeep(850, 'sine', 0.1, 0.1);
-      }
-    }, 1500);
+      // Simulated reply fallback
+      setTimeout(() => {
+        const replies = [
+          "That's so cool! Tell me more ✨",
+          "Aww nice! Do you want to jump on a video call? 📹",
+          "Haha love that! 😄 What music do you listen to?",
+          "Awesome! I'm online right now!"
+        ];
+        const randomReply = replies[Math.floor(Math.random() * replies.length)];
+        if (state.dmPartner && state.dmMessages[state.dmPartner.id]) {
+          state.dmMessages[state.dmPartner.id].push({ sender: 'them', text: randomReply });
+          renderDMMessages();
+          SoundFX.playBeep(850, 'sine', 0.1, 0.1);
+        }
+      }, 1500);
+    }
+
+    elements.dmInput.value = '';
+    SoundFX.playBeep(750, 'sine', 0.08, 0.1);
   }
 
   // ================= PROFILE & CALL HISTORY =================
@@ -1006,6 +1288,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (vipBtn) {
       vipBtn.addEventListener('click', () => {
         state.isVip = true;
+        updateDBVipStatus();
         showToast('👑 VIP Membership Activated! Enjoy unlimited filters.');
         vipBtn.textContent = '✓ Active VIP Member';
         vipBtn.style.background = '#ffd700';
@@ -1030,6 +1313,9 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.callBtnNext.addEventListener('click', nextMatch);
     if (elements.callBtnReport) {
       elements.callBtnReport.addEventListener('click', () => {
+        if (state.currentPartner) {
+          dbBlockUser(state.currentPartner.id);
+        }
         showToast('🛡️ User reported & blocked. Finding next match...');
         nextMatch();
       });
@@ -1106,6 +1392,70 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.dmModal.classList.remove('active');
         launchVideoCall(state.dmPartner);
       }
+    });
+
+    // Supabase Auth Settings Dialog
+    elements.btnAuthConfig.addEventListener('click', () => {
+      elements.supabaseUrlInput.value = localStorage.getItem('supabase_url') || '';
+      elements.supabaseKeyInput.value = localStorage.getItem('supabase_key') || '';
+      elements.authConfigModal.classList.add('active');
+    });
+
+    elements.btnConfigCancel.addEventListener('click', () => {
+      elements.authConfigModal.classList.remove('active');
+    });
+
+    elements.btnConfigSave.addEventListener('click', () => {
+      const url = elements.supabaseUrlInput.value.trim();
+      const key = elements.supabaseKeyInput.value.trim();
+
+      if (url && key) {
+        localStorage.setItem('supabase_url', url);
+        localStorage.setItem('supabase_key', key);
+        elements.authConfigModal.classList.remove('active');
+        showToast('🔑 Credentials saved. Re-connecting...');
+        initSupabase();
+      } else {
+        showToast('⚠️ Please enter both URL and Key!');
+      }
+    });
+
+    // Auth Form Toggle (Login / Register)
+    elements.tabLoginBtn.addEventListener('click', () => {
+      elements.tabLoginBtn.classList.add('active');
+      elements.tabRegisterBtn.classList.remove('active');
+      elements.loginForm.classList.add('active');
+      elements.registerForm.classList.remove('active');
+    });
+
+    elements.tabRegisterBtn.addEventListener('click', () => {
+      elements.tabRegisterBtn.classList.add('active');
+      elements.tabLoginBtn.classList.remove('active');
+      elements.registerForm.classList.add('active');
+      elements.loginForm.classList.remove('active');
+    });
+
+    // Login Form Submit
+    elements.loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value.trim();
+      const pass = document.getElementById('login-password').value;
+      handleSignIn(email, pass);
+    });
+
+    // Register Form Submit
+    elements.registerForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const username = document.getElementById('reg-username').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const pass = document.getElementById('reg-password').value;
+      const gender = document.getElementById('reg-gender').value;
+      handleSignUp(email, pass, username, gender);
+    });
+
+    // Guest Button Trigger
+    elements.btnGuestLogin.addEventListener('click', () => {
+      handleGuestLogin();
     });
   }
 
