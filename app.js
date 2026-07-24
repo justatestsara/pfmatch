@@ -348,7 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!supabase) return;
     try {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('cuty_profiles')
         .select('*')
         .eq('id', userId)
         .single();
@@ -368,7 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Update online status in database
         await supabase
-          .from('profiles')
+          .from('cuty_profiles')
           .update({ online_status: 'online', updated_at: new Date() })
           .eq('id', userId);
       }
@@ -381,7 +381,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!supabase || !currentUser) return;
     try {
       await supabase
-        .from('profiles')
+        .from('cuty_profiles')
         .update({ coins: newCoins })
         .eq('id', currentUser.id);
     } catch (err) {
@@ -393,7 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!supabase || !currentUser) return;
     try {
       await supabase
-        .from('profiles')
+        .from('cuty_profiles')
         .update({ is_vip: true })
         .eq('id', currentUser.id);
     } catch (err) {
@@ -464,7 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!supabase || !currentUser) return;
     try {
       await supabase
-        .from('messages')
+        .from('cuty_messages')
         .insert({
           sender_id: currentUser.id,
           receiver_id: receiverUserId,
@@ -479,7 +479,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!supabase || !currentUser) return;
     try {
       const { data, error } = await supabase
-        .from('messages')
+        .from('cuty_messages')
         .select('*')
         .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${partnerUserId}),and(sender_id.eq.${partnerUserId},receiver_id.eq.${currentUser.id})`)
         .order('created_at', { ascending: true });
@@ -503,7 +503,7 @@ document.addEventListener('DOMContentLoaded', () => {
     supabase.channel('messages-realtime-channel')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages' },
+        { event: 'INSERT', schema: 'public', table: 'cuty_messages' },
         (payload) => {
           const msg = payload.new;
           if (msg.receiver_id === currentUser.id || msg.sender_id === currentUser.id) {
@@ -532,7 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!supabase || !currentUser) return;
     try {
       await supabase
-        .from('blocks')
+        .from('cuty_blocks')
         .insert({
           blocker_id: currentUser.id,
           blocked_id: blockedUserId
