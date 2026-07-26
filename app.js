@@ -295,12 +295,12 @@ document.addEventListener('DOMContentLoaded', () => {
   let myProfile = null;
 
   function initSupabase() {
-    const url = localStorage.getItem('supabase_url') || 'https://blxdnakypaawuktjufme.db.co';
+    const url = localStorage.getItem('supabase_url') || 'https://blxdnakypaawuktjufme.supabase.co';
     const key = localStorage.getItem('supabase_key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJseGRuYWt5cGFhd3VrdGp1Zm1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjgxODYsImV4cCI6MjA5NDcwNDE4Nn0.nQzOnYHn5Ocz-poVSfemBIRYEy1WHbXB3Hip7a20QfY';
 
-    if (url && key && typeof window.db !== 'undefined') {
+    if (url && key && typeof window.supabase !== 'undefined') {
       try {
-        db = window.db.createClient(url, key);
+        db = window.supabase.createClient(url, key);
         console.log('[Cuty Supabase] Client initialized successfully');
         
         // Listen to Auth events
@@ -324,10 +324,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
       } catch (err) {
         console.log('[Cuty Supabase] Failed to initialize:', err);
+        showToast('Supabase Init Error: ' + err.message);
         elements.authOverlay.classList.add('active');
       }
     } else {
-      console.log('[Cuty Supabase] Credentials missing. Open settings to connect.');
+      console.log('[Cuty Supabase] Credentials missing or library not loaded.');
+      if (typeof window.supabase === 'undefined') {
+        showToast('⚠️ Supabase JS library failed to load!');
+      } else {
+        showToast('⚠️ Database configuration missing!');
+      }
       elements.authOverlay.classList.add('active');
     }
   }
