@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // ================= STATE MANAGEMENT =================
   const state = {
     coins: 30, // 1 coin = 1 minute talking time
-    isVip: false,
     currentView: 'view-random',
     activeGenderFilter: 'both',
     localStream: null,
@@ -22,8 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
     beautyFilter: 'normal',
     audioMuted: false,
     callHistory: [
-      { name: 'Elena Rostova', flag: '🇷🇺', duration: '03:14', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150' },
-      { name: 'Chloe Dubois', flag: '🇫🇷', duration: '05:40', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150' },
+      { name: 'Elena Rostova', flag: '🇷🇺', duration: '03:14', avatar: '/Profile Images/imgi_14_thumb_32f22d27a0.jpg' },
+      { name: 'Chloe Dubois', flag: '🇫🇷', duration: '05:40', avatar: '/Profile Images/imgi_22_thumb_1760b3e140.jpg' },
     ],
     dmPartner: null,
     dmMessages: {}
@@ -41,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
       status: 'online',
       popular: true,
       rate: '1 coin/min',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+      avatar: '/Profile Images/imgi_14_thumb_32f22d27a0.jpg',
       bio: 'Love dancing, travel, and deep late night talks! 💃✨'
     },
     {
@@ -54,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
       status: 'online',
       popular: true,
       rate: '1 coin/min',
-      avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&auto=format&fit=crop&q=80',
+      avatar: '/Profile Images/imgi_19_thumb_23e5bcff0c.jpg',
       bio: 'Coffee lover & interior designer from Milan ☕🎨'
     },
     {
@@ -67,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
       status: 'online',
       popular: false,
       rate: '1 coin/min',
-      avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&auto=format&fit=crop&q=80',
+      avatar: '/Profile Images/imgi_22_thumb_1760b3e140.jpg',
       bio: 'Fashion enthusiast. Teach me your language! 🥐'
     },
     {
@@ -80,60 +79,229 @@ document.addEventListener('DOMContentLoaded', () => {
       status: 'online',
       popular: true,
       rate: '1 coin/min',
-      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&auto=format&fit=crop&q=80',
+      avatar: '/Profile Images/imgi_22_thumb_6a7b87e5aa.jpg',
       bio: 'Anime enthusiast and video gamer 🎮🌸'
     },
     {
       id: 'usr_5',
-      name: 'Lucas Silva',
-      gender: 'male',
-      age: 25,
-      country: 'Brazil',
-      flag: '🇧🇷',
-      status: 'online',
-      popular: true,
-      rate: '1 coin/min',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
-      bio: 'Surfer & DJ. Let’s vibe to music! 🏄‍♂️🎧'
-    },
-    {
-      id: 'usr_6',
-      name: 'David Miller',
-      gender: 'male',
-      age: 26,
+      name: 'Amelia Smith',
+      gender: 'female',
+      age: 22,
       country: 'USA',
       flag: '🇺🇸',
       status: 'online',
       popular: false,
       rate: '1 coin/min',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80',
-      bio: 'Software dev & outdoor hiker ⛰️💻'
+      avatar: '/Profile Images/imgi_23_thumb_bac15870c7.jpg',
+      bio: 'Always down for a laugh! Let’s chat 🎸😂'
+    },
+    {
+      id: 'usr_6',
+      name: 'Mia Larsson',
+      gender: 'female',
+      age: 25,
+      country: 'Sweden',
+      flag: '🇸🇪',
+      status: 'online',
+      popular: true,
+      rate: '1 coin/min',
+      avatar: '/Profile Images/imgi_26_thumb_294ef15058.jpg',
+      bio: 'Exploring the world one chat at a time 🌍✈️'
     },
     {
       id: 'usr_7',
-      name: 'Amara Ndiaye',
+      name: 'Clara Fischer',
       gender: 'female',
-      age: 22,
-      country: 'Senegal',
-      flag: '🇸🇳',
+      age: 24,
+      country: 'Germany',
+      flag: '🇩🇪',
       status: 'online',
       popular: false,
       rate: '1 coin/min',
-      avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&auto=format&fit=crop&q=80',
-      bio: 'Modeling, music, and positivity 🌟✨'
+      avatar: '/Profile Images/imgi_28_thumb_21e4952114.jpg',
+      bio: 'Art history student. Let’s talk about art! 🎨📖'
     },
     {
       id: 'usr_8',
-      name: 'Liam Smith',
-      gender: 'male',
+      name: 'Olivia Martinez',
+      gender: 'female',
+      age: 23,
+      country: 'Spain',
+      flag: '🇪🇸',
+      status: 'online',
+      popular: true,
+      rate: '1 coin/min',
+      avatar: '/Profile Images/imgi_29_thumb_1a17a016ac.jpg',
+      bio: 'Dance instructor from Barcelona 💃☀️'
+    },
+    {
+      id: 'usr_9',
+      name: 'Isabella Silva',
+      gender: 'female',
+      age: 21,
+      country: 'Brazil',
+      flag: '🇧🇷',
+      status: 'online',
+      popular: true,
+      rate: '1 coin/min',
+      avatar: '/Profile Images/imgi_31_thumb_848a38c3ff.jpg',
+      bio: 'Beach lover & music enthusiast 🏖️🎧'
+    },
+    {
+      id: 'usr_10',
+      name: 'Aria Taylor',
+      gender: 'female',
       age: 24,
       country: 'UK',
       flag: '🇬🇧',
       status: 'online',
+      popular: false,
+      rate: '1 coin/min',
+      avatar: '/Profile Images/imgi_32_thumb_2cc404b9e2.jpg',
+      bio: 'Bookworm and pet lover 🐶📚'
+    },
+    {
+      id: 'usr_11',
+      name: 'Emma Johnson',
+      gender: 'female',
+      age: 22,
+      country: 'Canada',
+      flag: '🇨🇦',
+      status: 'online',
+      popular: false,
+      rate: '1 coin/min',
+      avatar: '/Profile Images/imgi_32_thumb_85628c8d0e.jpg',
+      bio: 'Photography student. Say cheese! 📸✨'
+    },
+    {
+      id: 'usr_12',
+      name: 'Hannah Wilson',
+      gender: 'female',
+      age: 23,
+      country: 'Australia',
+      flag: '🇦🇺',
+      status: 'online',
       popular: true,
       rate: '1 coin/min',
-      avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=400&auto=format&fit=crop&q=80',
-      bio: 'Guitar player & comedy lover 🎸😂'
+      avatar: '/Profile Images/imgi_34_thumb_5aaa875450.jpg',
+      bio: 'Surfing, sunshine, and positive vibes 🏄‍♀️☀️'
+    },
+    {
+      id: 'usr_13',
+      name: 'Lily Brown',
+      gender: 'female',
+      age: 21,
+      country: 'New Zealand',
+      flag: '🇳🇿',
+      status: 'online',
+      popular: false,
+      rate: '1 coin/min',
+      avatar: '/Profile Images/imgi_35_thumb_86f09eb120.jpg',
+      bio: 'Nature walks and acoustic music 🌿🎶'
+    },
+    {
+      id: 'usr_14',
+      name: 'Zoe Davies',
+      gender: 'female',
+      age: 24,
+      country: 'Wales',
+      flag: '🏴󠁧󠁢󠁷󠁬󠁳󠁿',
+      status: 'online',
+      popular: true,
+      rate: '1 coin/min',
+      avatar: '/Profile Images/imgi_39_thumb_9a6017c292.jpg',
+      bio: 'Let’s enjoy good talks and virtual coffee ☕'
+    },
+    {
+      id: 'usr_15',
+      name: 'Sophie Clark',
+      gender: 'female',
+      age: 22,
+      country: 'Scotland',
+      flag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+      status: 'online',
+      popular: false,
+      rate: '1 coin/min',
+      avatar: '/Profile Images/imgi_3_thumb_1c308df074.jpg',
+      bio: 'Always looking on the bright side of life ☀️'
+    },
+    {
+      id: 'usr_16',
+      name: 'Emily Evans',
+      gender: 'female',
+      age: 23,
+      country: 'Ireland',
+      flag: '🇮🇪',
+      status: 'online',
+      popular: true,
+      rate: '1 coin/min',
+      avatar: '/Profile Images/imgi_40_thumb_988bbaac3d.jpg',
+      bio: 'Irish dancer and history geek 🍀💃'
+    },
+    {
+      id: 'usr_17',
+      name: 'Grace Roberts',
+      gender: 'female',
+      age: 25,
+      country: 'Norway',
+      flag: '🇳🇴',
+      status: 'online',
+      popular: false,
+      rate: '1 coin/min',
+      avatar: '/Profile Images/imgi_45_thumb_aa800007a0.jpg',
+      bio: 'Skiing, winter hiking, and hot cocoa ❄️☕'
+    },
+    {
+      id: 'usr_18',
+      name: 'Ruby Walker',
+      gender: 'female',
+      age: 22,
+      country: 'Denmark',
+      flag: '🇩🇰',
+      status: 'online',
+      popular: true,
+      rate: '1 coin/min',
+      avatar: '/Profile Images/imgi_4_thumb_8489afdea9.jpg',
+      bio: 'Hygge lover, designer, and bakery fan 🥐🎨'
+    },
+    {
+      id: 'usr_19',
+      name: 'Lucy Hall',
+      gender: 'female',
+      age: 24,
+      country: 'Netherlands',
+      flag: '🇳🇱',
+      status: 'online',
+      popular: false,
+      rate: '1 coin/min',
+      avatar: '/Profile Images/imgi_6_thumb_12c7bc526d.jpg',
+      bio: 'Cycling, tulip fields, and coding 🌷🚲'
+    },
+    {
+      id: 'usr_20',
+      name: 'Isla Green',
+      gender: 'female',
+      age: 21,
+      country: 'Switzerland',
+      flag: '🇨🇭',
+      status: 'online',
+      popular: true,
+      rate: '1 coin/min',
+      avatar: '/Profile Images/imgi_8_thumb_42dfbb79c3.jpg',
+      bio: 'Alpine hiking and chocolate enthusiast 🍫🏔️'
+    },
+    {
+      id: 'usr_21',
+      name: 'Zara Wright',
+      gender: 'female',
+      age: 23,
+      country: 'Austria',
+      flag: '🇦🇹',
+      status: 'online',
+      popular: true,
+      rate: '1 coin/min',
+      avatar: '/Profile Images/imgi_8_thumb_9350032849.jpg',
+      bio: 'Classical music lover and pastry baker 🎻🍰'
     }
   ];
 
@@ -295,8 +463,21 @@ document.addEventListener('DOMContentLoaded', () => {
   let myProfile = null;
 
   function initSupabase() {
-    const url = localStorage.getItem('supabase_url') || 'https://blxdnakypaawuktjufme.supabase.co';
-    const key = localStorage.getItem('supabase_key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJseGRuYWt5cGFhd3VrdGp1Zm1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjgxODYsImV4cCI6MjA5NDcwNDE4Nn0.nQzOnYHn5Ocz-poVSfemBIRYEy1WHbXB3Hip7a20QfY';
+    let url = localStorage.getItem('supabase_url');
+    let key = localStorage.getItem('supabase_key');
+
+    // Sanitizer: clear invalid/blank settings inputs
+    if (url === 'undefined' || url === 'null' || (url && url.trim() === '')) {
+      localStorage.removeItem('supabase_url');
+      url = null;
+    }
+    if (key === 'undefined' || key === 'null' || (key && key.trim() === '')) {
+      localStorage.removeItem('supabase_key');
+      key = null;
+    }
+
+    url = url || 'https://blxdnakypaawuktjufme.supabase.co';
+    key = key || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJseGRuYWt5cGFhd3VrdGp1Zm1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjgxODYsImV4cCI6MjA5NDcwNDE4Nn0.nQzOnYHn5Ocz-poVSfemBIRYEy1WHbXB3Hip7a20QfY';
 
     if (url && key && typeof window.supabase !== 'undefined') {
       try {
@@ -362,7 +543,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (data) {
         myProfile = data;
         state.coins = data.coins;
-        state.isVip = data.is_vip;
         renderCoinBalance();
 
         // Update UI info
@@ -390,18 +570,6 @@ document.addEventListener('DOMContentLoaded', () => {
         .eq('id', currentUser.id);
     } catch (err) {
       console.log('Failed to save coin balance to Supabase:', err);
-    }
-  }
-
-  async function updateDBVipStatus() {
-    if (!db || !currentUser) return;
-    try {
-      await db
-        .from('cuty_profiles')
-        .update({ is_vip: true })
-        .eq('id', currentUser.id);
-    } catch (err) {
-      console.log('Failed to save VIP status to Supabase:', err);
     }
   }
 
@@ -1286,20 +1454,6 @@ document.addEventListener('DOMContentLoaded', () => {
         buyCoinPackage(coins, price);
       });
     });
-
-    // VIP Button
-    const vipBtn = document.getElementById('profile-vip-btn');
-    if (vipBtn) {
-      vipBtn.addEventListener('click', () => {
-        state.isVip = true;
-        updateDBVipStatus();
-        showToast('👑 VIP Membership Activated! Enjoy unlimited filters.');
-        vipBtn.textContent = '✓ Active VIP Member';
-        vipBtn.style.background = '#ffd700';
-        vipBtn.style.color = '#000';
-      });
-    }
-
     // Gender Filter Tabs
     elements.genderTabs.forEach(tab => {
       tab.addEventListener('click', () => {
