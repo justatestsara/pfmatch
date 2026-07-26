@@ -29,5 +29,11 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "related_applications": [
+    {
+      "platform": "play",
+      "id": "com.cutylive.app"
+    }
   ]
 }
