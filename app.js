@@ -295,8 +295,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let myProfile = null;
 
   function initSupabase() {
-    const url = localStorage.getItem('supabase_url');
-    const key = localStorage.getItem('supabase_key');
+    const url = localStorage.getItem('supabase_url') || 'https://blxdnakypaawuktjufme.supabase.co';
+    const key = localStorage.getItem('supabase_key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJseGRuYWt5cGFhd3VrdGp1Zm1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjgxODYsImV4cCI6MjA5NDcwNDE4Nn0.nQzOnYHn5Ocz-poVSfemBIRYEy1WHbXB3Hip7a20QfY';
 
     if (url && key && typeof window.supabase !== 'undefined') {
       try {
