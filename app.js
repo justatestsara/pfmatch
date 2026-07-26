@@ -289,10 +289,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  }
-
   // ================= SUPABASE CLIENT & AUTHENTICATION =================
-  let supabase = null;
+  let db = null;
   let currentUser = null;
   let myProfile = null;
 
@@ -300,13 +298,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const url = localStorage.getItem('supabase_url');
     const key = localStorage.getItem('supabase_key');
 
-    if (url && key && typeof supabasejs !== 'undefined') {
+    if (url && key && typeof window.supabase !== 'undefined') {
       try {
-        supabase = supabasejs.createClient(url, key);
+        db = window.supabase.createClient(url, key);
         console.log('[Cuty Supabase] Client initialized successfully');
         
         // Listen to Auth events
-        supabase.auth.onAuthStateChange(async (event, session) => {
+        db.auth.onAuthStateChange(async (event, session) => {
           if (session) {
             currentUser = session.user;
             await loadUserProfile(currentUser.id);
@@ -336,7 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function checkActiveSession() {
     if (!supabase) return;
-    const { data } = await supabase.auth.getSession();
+    const { data } = await db.auth.getSession();
     if (data.session) {
       currentUser = data.session.user;
       await loadUserProfile(currentUser.id);
@@ -408,7 +406,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await db.auth.signUp({
         email,
         password,
         options: {
@@ -434,7 +432,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await db.auth.signInWithPassword({
         email,
         password
       });
@@ -500,7 +498,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function subscribeToDMMessages() {
     if (!supabase || !currentUser) return;
-    supabase.channel('messages-realtime-channel')
+    db.channel('messages-realtime-channel')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'cuty_messages' },
