@@ -295,12 +295,12 @@ document.addEventListener('DOMContentLoaded', () => {
   let myProfile = null;
 
   function initSupabase() {
-    const url = localStorage.getItem('supabase_url') || 'https://blxdnakypaawuktjufme.supabase.co';
+    const url = localStorage.getItem('supabase_url') || 'https://blxdnakypaawuktjufme.db.co';
     const key = localStorage.getItem('supabase_key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJseGRuYWt5cGFhd3VrdGp1Zm1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjgxODYsImV4cCI6MjA5NDcwNDE4Nn0.nQzOnYHn5Ocz-poVSfemBIRYEy1WHbXB3Hip7a20QfY';
 
-    if (url && key && typeof window.supabase !== 'undefined') {
+    if (url && key && typeof window.db !== 'undefined') {
       try {
-        db = window.supabase.createClient(url, key);
+        db = window.db.createClient(url, key);
         console.log('[Cuty Supabase] Client initialized successfully');
         
         // Listen to Auth events
@@ -333,7 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function checkActiveSession() {
-    if (!supabase) return;
+    if (!db) return;
     const { data } = await db.auth.getSession();
     if (data.session) {
       currentUser = data.session.user;
@@ -343,9 +343,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function loadUserProfile(userId) {
-    if (!supabase) return;
+    if (!db) return;
     try {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('cuty_profiles')
         .select('*')
         .eq('id', userId)
@@ -365,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('radar-user-avatar').src = data.avatar_url;
         
         // Update online status in database
-        await supabase
+        await db
           .from('cuty_profiles')
           .update({ online_status: 'online', updated_at: new Date() })
           .eq('id', userId);
@@ -376,9 +376,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function updateDBCoins(newCoins) {
-    if (!supabase || !currentUser) return;
+    if (!db || !currentUser) return;
     try {
-      await supabase
+      await db
         .from('cuty_profiles')
         .update({ coins: newCoins })
         .eq('id', currentUser.id);
@@ -388,9 +388,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function updateDBVipStatus() {
-    if (!supabase || !currentUser) return;
+    if (!db || !currentUser) return;
     try {
-      await supabase
+      await db
         .from('cuty_profiles')
         .update({ is_vip: true })
         .eq('id', currentUser.id);
@@ -401,7 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Auth Operations
   async function handleSignUp(email, password, username, gender) {
-    if (!supabase) {
+    if (!db) {
       showToast('⚠️ Please link your Supabase database first!');
       return;
     }
@@ -427,7 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function handleSignIn(email, password) {
-    if (!supabase) {
+    if (!db) {
       showToast('⚠️ Please link your Supabase database first!');
       return;
     }
@@ -459,9 +459,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Direct Message Sync
   async function dbSendDM(receiverUserId, text) {
-    if (!supabase || !currentUser) return;
+    if (!db || !currentUser) return;
     try {
-      await supabase
+      await db
         .from('cuty_messages')
         .insert({
           sender_id: currentUser.id,
@@ -474,9 +474,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function dbLoadDMHistory(partnerUserId) {
-    if (!supabase || !currentUser) return;
+    if (!db || !currentUser) return;
     try {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('cuty_messages')
         .select('*')
         .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${partnerUserId}),and(sender_id.eq.${partnerUserId},receiver_id.eq.${currentUser.id})`)
@@ -497,7 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function subscribeToDMMessages() {
-    if (!supabase || !currentUser) return;
+    if (!db || !currentUser) return;
     db.channel('messages-realtime-channel')
       .on(
         'postgres_changes',
@@ -527,9 +527,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Report Blocks Persistence
   async function dbBlockUser(blockedUserId) {
-    if (!supabase || !currentUser) return;
+    if (!db || !currentUser) return;
     try {
-      await supabase
+      await db
         .from('cuty_blocks')
         .insert({
           blocker_id: currentUser.id,
@@ -1148,7 +1148,7 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.dmPartnerName.textContent = person.name;
     elements.dmPartnerAvatar.src = person.avatar;
 
-    if (supabase && currentUser) {
+    if (db && currentUser) {
       dbLoadDMHistory(person.id);
     } else {
       if (!state.dmMessages[person.id]) {
@@ -1181,7 +1181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const text = elements.dmInput.value.trim();
     if (!text || !state.dmPartner) return;
 
-    if (supabase && currentUser) {
+    if (db && currentUser) {
       // Save directly to Supabase table
       dbSendDM(state.dmPartner.id, text);
     } else {
