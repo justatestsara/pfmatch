@@ -1333,17 +1333,14 @@ body.fullscreen-mode .frame-toggle-bar {
 
 /* In-Call Live Chat Overlay */
 .call-chat-overlay {
-  position: absolute;
-  bottom: 120px;
-  left: 16px;
-  right: 16px;
-  max-height: 180px;
+  max-height: 140px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  z-index: 20;
   scrollbar-width: none;
+  margin-bottom: 8px;
+  width: 100%;
 }
 
 .chat-bubble {

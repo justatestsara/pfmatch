@@ -18,7 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
     currentPartner: null,
     callDurationSeconds: 0,
     callTimerInterval: null,
-    beautyFilter: 'normal',
     audioMuted: false,
     callHistory: [
       { name: 'Elena Rostova', flag: '🇷🇺', duration: '03:14', avatar: '/Profile Images/imgi_14_thumb_32f22d27a0.jpg' },
@@ -400,15 +399,11 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Call Actions
     callBtnMute: document.getElementById('call-btn-mute'),
-    callBtnFilter: document.getElementById('call-btn-filter'),
     callBtnGift: document.getElementById('call-btn-gift'),
     callBtnNext: document.getElementById('call-btn-next'),
     callBtnEnd: document.getElementById('call-btn-end'),
     
     // Sheets & Canvas FX
-    filterSheet: document.getElementById('filter-sheet'),
-    closeFilterSheet: document.getElementById('close-filter-sheet'),
-    filterOpts: document.querySelectorAll('.filter-opt'),
     giftSheet: document.getElementById('gift-sheet'),
     closeGiftSheet: document.getElementById('close-gift-sheet'),
     giftCards: document.querySelectorAll('.gift-card'),
@@ -765,7 +760,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         socket.on('peer-ended-call', () => {
           showToast('Partner left the call');
-          endCall();
+          nextMatch();
         });
       } catch (err) {
         console.log('Standalone mode without active socket server.');
@@ -1066,9 +1061,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       ctx.restore();
 
-      // Apply AR Beauty filter on remote stream if active
-      applyCanvasFilterEffects(ctx, canvas.width, canvas.height);
-
       partnerCanvasAnimFrame = requestAnimationFrame(drawPartner);
     }
 
@@ -1077,22 +1069,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     // fallback start
     drawPartner();
-  }
-
-  function applyCanvasFilterEffects(ctx, width, height) {
-    if (state.beautyFilter === 'smooth') {
-      ctx.fillStyle = 'rgba(255, 192, 203, 0.08)';
-      ctx.fillRect(0, 0, width, height);
-    } else if (state.beautyFilter === 'warm') {
-      ctx.fillStyle = 'rgba(255, 140, 0, 0.12)';
-      ctx.fillRect(0, 0, width, height);
-    } else if (state.beautyFilter === 'cyber') {
-      ctx.fillStyle = 'rgba(0, 242, 254, 0.1)';
-      ctx.fillRect(0, 0, width, height);
-    } else if (state.beautyFilter === 'vintage') {
-      ctx.fillStyle = 'rgba(120, 80, 20, 0.15)';
-      ctx.fillRect(0, 0, width, height);
-    }
   }
 
   // 1 COIN = 1 MINUTE CALL TIMER LOGIC
@@ -1486,29 +1462,9 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast(state.audioMuted ? 'Microphone Muted' : 'Microphone Active');
     });
 
-    // Filter Sheet Toggle
-    elements.callBtnFilter.addEventListener('click', () => {
-      elements.filterSheet.classList.toggle('active');
-      elements.giftSheet.classList.remove('active');
-    });
-    elements.closeFilterSheet.addEventListener('click', () => {
-      elements.filterSheet.classList.remove('active');
-    });
-
-    elements.filterOpts.forEach(opt => {
-      opt.addEventListener('click', () => {
-        elements.filterOpts.forEach(o => o.classList.remove('active'));
-        opt.classList.add('active');
-        state.beautyFilter = opt.getAttribute('data-filter');
-        showToast(`Beauty Filter: ${opt.textContent}`);
-        elements.filterSheet.classList.remove('active');
-      });
-    });
-
     // Gift Sheet Toggle
     elements.callBtnGift.addEventListener('click', () => {
       elements.giftSheet.classList.toggle('active');
-      elements.filterSheet.classList.remove('active');
     });
     elements.closeGiftSheet.addEventListener('click', () => {
       elements.giftSheet.classList.remove('active');

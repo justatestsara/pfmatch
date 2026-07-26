@@ -35,16 +35,6 @@
     <!-- Phone Screen Content -->
     <div class="screen-container">
 
-      <!-- Android Top Status Bar -->
-      <div class="status-bar">
-        <span class="status-time" id="status-clock">14:35</span>
-        <div class="status-icons">
-          <i data-lucide="wifi"></i>
-          <span class="badge-5g">5G</span>
-          <i data-lucide="battery"></i>
-        </div>
-      </div>
-
       <!-- App Header Bar -->
       <header class="app-header">
         <div class="brand-logo">
@@ -361,13 +351,13 @@
         </div>
       </div>
 
-      <!-- In-Call Floating Message Overlay -->
-      <div class="call-chat-overlay" id="call-chat-overlay">
-        <!-- Messages appended dynamically -->
-      </div>
-
       <!-- In-Call Bottom Controls Bar -->
       <div class="call-bottom-bar">
+        <!-- In-Call Floating Message Overlay -->
+        <div class="call-chat-overlay" id="call-chat-overlay">
+          <!-- Messages appended dynamically -->
+        </div>
+
         <!-- Live Chat Input Bar -->
         <div class="chat-input-row">
           <input type="text" id="call-chat-input" placeholder="Say something nice..." maxlength="120" />
@@ -380,11 +370,6 @@
         <div class="call-actions-row">
           <button class="call-action-btn" id="call-btn-mute" title="Mute Audio">
             <i data-lucide="mic"></i>
-          </button>
-
-          <button class="call-action-btn" id="call-btn-filter" title="Beauty Filter">
-            <i data-lucide="wand-2"></i>
-            <span class="btn-subtext">Beauty</span>
           </button>
 
           <button class="call-action-btn gift-btn" id="call-btn-gift" title="Send Gift">
@@ -400,21 +385,6 @@
           <button class="call-action-btn end-btn" id="call-btn-end" title="End Call">
             <i data-lucide="phone-off"></i>
           </button>
-        </div>
-      </div>
-
-      <!-- Beauty Filter Picker Sheet -->
-      <div class="filter-sheet" id="filter-sheet">
-        <div class="sheet-header">
-          <span>✨ Select Beauty Filter</span>
-          <button id="close-filter-sheet"><i data-lucide="x"></i></button>
-        </div>
-        <div class="filter-options">
-          <button class="filter-opt active" data-filter="normal">Normal</button>
-          <button class="filter-opt" data-filter="smooth">🌸 Smooth Skin</button>
-          <button class="filter-opt" data-filter="warm">☀️ Warm Sunset</button>
-          <button class="filter-opt" data-filter="cyber">⚡ Cyber Neon</button>
-          <button class="filter-opt" data-filter="vintage">📷 Vintage Retro</button>
         </div>
       </div>
 

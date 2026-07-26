@@ -151,6 +151,16 @@ io.on('connection', (socket) => {
     const index = matchQueue.indexOf(socket.id);
     if (index > -1) matchQueue.splice(index, 1);
 
+    // Find and terminate any active call this socket was in
+    for (const [callId, peers] of activeCalls.entries()) {
+      if (peers.peer1 === socket.id || peers.peer2 === socket.id) {
+        const partnerSocketId = peers.peer1 === socket.id ? peers.peer2 : peers.peer1;
+        io.to(partnerSocketId).emit('peer-ended-call');
+        activeCalls.delete(callId);
+        break;
+      }
+    }
+
     io.emit('online-count-update', onlineUsers.size);
   });
 });
