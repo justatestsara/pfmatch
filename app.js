@@ -634,7 +634,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const guestId = Math.floor(Math.random() * 1000000);
     const guestEmail = `guest_${guestId}@cutylive.app`;
     const guestPassword = `guest_pass_${guestId}`;
-    const guestName = `Guest_${guestId}`;
+    
+    const randomNames = ['Alex', 'Emma', 'Taylor', 'Jordan', 'Sam', 'Chris', 'Jamie', 'Morgan', 'Casey', 'Robin'];
+    const guestName = randomNames[Math.floor(Math.random() * randomNames.length)];
+    
     const randomGender = Math.random() > 0.5 ? 'female' : 'male';
 
     await handleSignUp(guestEmail, guestPassword, guestName, randomGender);
@@ -761,6 +764,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         socket.on('match-found', async (data) => {
           targetPeerSocketId = data.partner.socketId;
+          if (!state.localStream) {
+            await setupCamera();
+          }
           launchRealWebRTCCall(data.partner, data.isInitiator);
         });
 
@@ -809,8 +815,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  let iceCandidatesQueue = [];
+
   async function createPeerConnection() {
     peerConnection = new RTCPeerConnection(rtcConfig);
+    iceCandidatesQueue = [];
 
     if (state.localStream) {
       state.localStream.getTracks().forEach(track => {
@@ -822,6 +831,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (elements.remoteVideo && event.streams[0]) {
         elements.simulatedCanvasWrapper.style.display = 'none';
         elements.remoteVideo.srcObject = event.streams[0];
+        elements.remoteVideo.play().catch(err => {
+          console.log("Remote video autoplay blocked, trying play again:", err);
+        });
       }
     };
 
@@ -836,7 +848,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function launchRealWebRTCCall(partner, isInitiator) {
-    launchVideoCall(partner);
+    launchVideoCall(partner, true);
     await createPeerConnection();
 
     if (isInitiator) {
@@ -852,6 +864,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function handleSignalOffer(offer) {
     if (!peerConnection) await createPeerConnection();
     await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+    await processQueuedCandidates();
     const answer = await peerConnection.createAnswer();
     await peerConnection.setLocalDescription(answer);
     socket.emit('signal-answer', {
@@ -863,12 +876,32 @@ document.addEventListener('DOMContentLoaded', () => {
   async function handleSignalAnswer(answer) {
     if (peerConnection) {
       await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+      await processQueuedCandidates();
     }
   }
 
   async function handleSignalCandidate(candidate) {
-    if (peerConnection) {
-      await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+    if (peerConnection && peerConnection.remoteDescription && peerConnection.remoteDescription.type) {
+      try {
+        await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (e) {
+        console.log("Error adding ice candidate:", e);
+      }
+    } else {
+      iceCandidatesQueue.push(candidate);
+    }
+  }
+
+  async function processQueuedCandidates() {
+    if (peerConnection && peerConnection.remoteDescription && peerConnection.remoteDescription.type) {
+      while (iceCandidatesQueue.length > 0) {
+        const candidate = iceCandidatesQueue.shift();
+        try {
+          await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (e) {
+          console.log("Error adding queued candidate:", e);
+        }
+      }
     }
   }
 
@@ -988,7 +1021,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ================= RANDOM VIDEO MATCH ENGINE =================
   let isSearchingMatch = false;
 
-  function startRandomMatch() {
+  async function startRandomMatch() {
     if (state.coins < 1) {
       showToast('⚠️ You need at least 1 coin to start a call!');
       openCoinStore();
@@ -999,6 +1032,13 @@ document.addEventListener('DOMContentLoaded', () => {
       cancelMatchSearch();
       return;
     }
+
+    // Ensure camera is fully ready
+    if (!state.localStream) {
+      elements.matchStatusText.textContent = 'Initializing camera...';
+      await setupCamera();
+    }
+
     isSearchingMatch = true;
 
     // UI searching state
@@ -1026,15 +1066,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ================= LIVE VIDEO CALL SYSTEM =================
-  function launchVideoCall(partner) {
+  function launchVideoCall(partner, isRealCall = false) {
     state.inCall = true;
     state.currentPartner = partner;
     state.callDurationSeconds = 0;
 
     // Populate Partner UI
     elements.callPartnerName.textContent = getFirstName(partner.name);
-    elements.callPartnerFlag.textContent = partner.flag;
-    elements.callPartnerLocation.textContent = partner.country;
+    elements.callPartnerFlag.textContent = partner.flag || '🌎';
+    elements.callPartnerLocation.textContent = partner.country || 'Global';
     elements.callPartnerAvatar.src = partner.avatar;
     elements.callTimerDisplay.textContent = '00:00';
     elements.callChatOverlay.innerHTML = '';
@@ -1042,8 +1082,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Show Call Modal
     elements.callModal.classList.add('active');
 
-    // Setup Remote Partner Video Feed (Realistic Canvas Generator for demo)
-    setupRemotePartnerCanvas(partner);
+    // Setup Video Feed
+    if (isRealCall) {
+      elements.simulatedCanvasWrapper.style.display = 'none';
+      if (elements.remoteVideo) {
+        elements.remoteVideo.style.display = 'block';
+      }
+    } else {
+      elements.simulatedCanvasWrapper.style.display = 'block';
+      if (elements.remoteVideo) {
+        elements.remoteVideo.style.display = 'none';
+      }
+      setupRemotePartnerCanvas(partner);
+    }
 
     // Start 1 Coin = 1 Minute Timer
     startCallTimer();
@@ -1374,9 +1425,9 @@ document.addEventListener('DOMContentLoaded', () => {
       el.className = 'history-item';
       el.innerHTML = `
         <div class="history-user">
-          <img src="${item.avatar}" alt="${item.name}" class="history-avatar" />
+          <img src="${item.avatar}" alt="${getFirstName(item.name)}" class="history-avatar" />
           <div>
-            <div class="history-name">${item.name} ${item.flag}</div>
+            <div class="history-name">${getFirstName(item.name)} ${item.flag}</div>
             <div class="history-time">Today</div>
           </div>
         </div>
