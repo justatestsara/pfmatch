@@ -569,12 +569,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Register user on socket server with correct username
         if (socket && socket.connected) {
+          const flagMap = { 'Russia': '🇷🇺', 'Italy': '🇮🇹', 'Global': '🌍' };
           socket.emit('register-user', {
             id: userId,
             name: data.username,
             gender: data.gender || 'female',
             coins: data.coins,
-            avatar: data.avatar_url
+            avatar: data.avatar_url,
+            country: data.country || 'Global',
+            flag: flagMap[data.country] || '🌍'
           });
         }
       }
@@ -860,9 +863,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     peerConnection.ontrack = (event) => {
-      if (elements.remoteVideo && event.streams[0]) {
+      if (elements.remoteVideo && (event.streams[0] || event.track)) {
         elements.simulatedCanvasWrapper.style.display = 'none';
-        elements.remoteVideo.srcObject = event.streams[0];
+        elements.remoteVideo.srcObject = event.streams[0] || new MediaStream([event.track]);
         elements.remoteVideo.play().catch(err => {
           console.log("Remote video autoplay blocked, trying play again:", err);
         });
@@ -1544,6 +1547,42 @@ document.addEventListener('DOMContentLoaded', () => {
     closeCoinStore();
   }
 
+  // Helper to scale down and compress profile images to WebP format
+  function compressImage(file, maxWidth, maxHeight, quality, callback) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL('image/webp', quality);
+        callback(dataUrl);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
   // ================= PROFILE DETAILS MODAL VIEW =================
   let activeDetailPerson = null;
 
@@ -1635,6 +1674,15 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.closeGiftSheet.addEventListener('click', () => {
       elements.giftSheet.classList.remove('active');
     });
+
+    // Backup interaction handler to bypass browser autoplay video blocks
+    if (elements.callModal) {
+      elements.callModal.addEventListener('click', () => {
+        if (elements.remoteVideo && elements.remoteVideo.srcObject) {
+          elements.remoteVideo.play().catch(() => {});
+        }
+      });
+    }
 
     elements.giftCards.forEach(card => {
       card.addEventListener('click', () => {
@@ -1779,23 +1827,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const file = event.target.files[0];
         if (!file) return;
 
-        // Size check (max 1MB for base64 optimization)
-        if (file.size > 1 * 1024 * 1024) {
-          showToast('⚠️ Photo must be smaller than 1MB!');
-          return;
-        }
+        showToast('📤 Uploading photo...');
 
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          const base64Data = e.target.result;
-          
+        // Automatically resize and compress image to small WebP (200x200 ideal size, 70% quality)
+        compressImage(file, 200, 200, 0.7, async (base64Data) => {
           avatarImg.src = base64Data;
           const radarAvatar = document.getElementById('radar-user-avatar');
           if (radarAvatar) radarAvatar.src = base64Data;
 
           if (db && currentUser) {
             try {
-              showToast('📤 Uploading photo...');
               const { error } = await db
                 .from('cuty_profiles')
                 .update({ avatar_url: base64Data, updated_at: new Date() })
@@ -1808,8 +1849,7 @@ document.addEventListener('DOMContentLoaded', () => {
               showToast('❌ Failed to save profile picture.');
             }
           }
-        };
-        reader.readAsDataURL(file);
+        });
       });
     }
   }

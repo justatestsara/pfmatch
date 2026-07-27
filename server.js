@@ -33,6 +33,8 @@ io.on('connection', (socket) => {
     let name = userProfile.name || 'Anonymous Cuty User';
     let gender = userProfile.gender || 'female';
     let avatar = userProfile.avatar || '/Profile Images/imgi_14_thumb_32f22d27a0.jpg';
+    let country = userProfile.country || 'Global';
+    let flag = userProfile.flag || '🌍';
 
     // If it's a guest user account, override it to be a female model profile!
     if (name.startsWith('Guest_')) {
@@ -40,6 +42,11 @@ io.on('connection', (socket) => {
       name = femaleNames[Math.floor(Math.random() * femaleNames.length)];
       gender = 'female';
       
+      const countries = ['Russia', 'Italy', 'Global'];
+      const flags = { 'Russia': '🇷🇺', 'Italy': '🇮🇹', 'Global': '🌍' };
+      country = countries[Math.floor(Math.random() * countries.length)];
+      flag = flags[country];
+
       const profileImages = [
         'imgi_14_thumb_32f22d27a0.jpg', 'imgi_19_thumb_23e5bcff0c.jpg', 'imgi_22_thumb_1760b3e140.jpg',
         'imgi_22_thumb_6a7b87e5aa.jpg', 'imgi_23_thumb_bac15870c7.jpg', 'imgi_26_thumb_294ef15058.jpg',
@@ -59,7 +66,9 @@ io.on('connection', (socket) => {
       name: name,
       gender: gender,
       avatar: avatar,
-      coins: userProfile.coins || 30
+      coins: userProfile.coins || 30,
+      country: country,
+      flag: flag
     };
     onlineUsers.set(socket.id, user);
 
