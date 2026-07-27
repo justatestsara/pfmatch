@@ -1184,6 +1184,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     targetPeerSocketId = null;
 
+    // Clean up WebRTC peer connection
+    if (peerConnection) {
+      try {
+        peerConnection.close();
+      } catch (e) {
+        console.log("Error closing peerConnection:", e);
+      }
+      peerConnection = null;
+    }
+
+    // Clear remote video source element stream
+    if (elements.remoteVideo) {
+      elements.remoteVideo.srcObject = null;
+    }
+
     if (state.callTimerInterval) clearInterval(state.callTimerInterval);
     if (partnerCanvasAnimFrame) cancelAnimationFrame(partnerCanvasAnimFrame);
 
