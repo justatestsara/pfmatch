@@ -9,10 +9,12 @@ CREATE TABLE IF NOT EXISTS public.cuty_profiles (
   username TEXT NOT NULL,
   gender TEXT DEFAULT 'female',
   country TEXT DEFAULT 'Global',
-  avatar_url TEXT DEFAULT 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+  avatar_url TEXT DEFAULT '/Profile Images/imgi_14_thumb_32f22d27a0.jpg',
   coins INTEGER DEFAULT 30 CHECK (coins >= 0),
   is_vip BOOLEAN DEFAULT false,
   online_status TEXT DEFAULT 'offline',
+  age INTEGER DEFAULT 18 CHECK (age >= 18),
+  rules_accepted BOOLEAN DEFAULT true,
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -85,14 +87,16 @@ CREATE POLICY "Users can block people in cuty" ON public.cuty_blocks
 CREATE OR REPLACE FUNCTION public.handle_new_cuty_user()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO public.cuty_profiles (id, username, gender, country, avatar_url, coins)
+  INSERT INTO public.cuty_profiles (id, username, gender, country, avatar_url, coins, age, rules_accepted)
   VALUES (
     new.id,
     COALESCE(new.raw_user_meta_data->>'username', 'Cuty User'),
     COALESCE(new.raw_user_meta_data->>'gender', 'female'),
     COALESCE(new.raw_user_meta_data->>'country', 'Global'),
-    COALESCE(new.raw_user_meta_data->>'avatar_url', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'),
-    30
+    COALESCE(new.raw_user_meta_data->>'avatar_url', '/Profile Images/imgi_14_thumb_32f22d27a0.jpg'),
+    30,
+    COALESCE((new.raw_user_meta_data->>'age')::INTEGER, 18),
+    COALESCE((new.raw_user_meta_data->>'rules_accepted')::BOOLEAN, true)
   );
   RETURN new;
 END;
