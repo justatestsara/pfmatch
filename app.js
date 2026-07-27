@@ -954,12 +954,15 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    if (isSearchingMatch) return;
+    if (isSearchingMatch) {
+      cancelMatchSearch();
+      return;
+    }
     isSearchingMatch = true;
 
     // UI searching state
     elements.startMatchBtn.classList.add('searching');
-    elements.startMatchBtnText.textContent = 'Searching Matches...';
+    elements.startMatchBtnText.textContent = 'Cancel Search';
     elements.matchStatusText.textContent = 'Finding cute people nearby...';
     elements.matchSubstatusText.textContent = `Filter: ${state.activeGenderFilter.toUpperCase()}`;
 
@@ -969,31 +972,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (socket && socket.connected) {
       socket.emit('join-match-queue', { genderFilter: state.activeGenderFilter });
     }
+  }
 
-    // Simulated search delay fallback
-    setTimeout(() => {
-      if (state.inCall) return; // already launched via WebRTC match-found event
-
-      elements.matchStatusText.textContent = 'Match Found! Connecting HD stream...';
-      SoundFX.playMatchSuccess();
-
-      setTimeout(() => {
-        if (state.inCall) return;
-        isSearchingMatch = false;
-        elements.startMatchBtn.classList.remove('searching');
-        elements.startMatchBtnText.textContent = 'Start Random Match';
-        elements.matchStatusText.textContent = 'Ready to meet cute people?';
-
-        // Select partner from database based on gender filter
-        let candidates = PEOPLE_DATABASE;
-        if (state.activeGenderFilter !== 'both') {
-          candidates = PEOPLE_DATABASE.filter(p => p.gender === state.activeGenderFilter);
-        }
-        const partner = candidates[Math.floor(Math.random() * candidates.length)];
-        launchVideoCall(partner);
-      }, 1000);
-
-    }, 1800);
+  function cancelMatchSearch() {
+    isSearchingMatch = false;
+    elements.startMatchBtn.classList.remove('searching');
+    elements.startMatchBtnText.textContent = 'Start Random Match';
+    elements.matchStatusText.textContent = 'Ready to meet cute people?';
+    if (socket && socket.connected) {
+      socket.emit('leave-match-queue');
+    }
   }
 
   // ================= LIVE VIDEO CALL SYSTEM =================
@@ -1169,13 +1157,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Trigger Canvas Particle Fireworks
     triggerGiftParticles(giftType);
-
-    // Automated thank you from partner
-    setTimeout(() => {
-      if (state.inCall && state.currentPartner) {
-        appendCallChatBubble(state.currentPartner.name, `OMG thank you so much for the ${giftNames[giftType]}!! 💖✨`);
-      }
-    }, 1500);
   }
 
   function triggerGiftParticles(giftType) {
@@ -1302,9 +1283,7 @@ document.addEventListener('DOMContentLoaded', () => {
       dbLoadDMHistory(person.id);
     } else {
       if (!state.dmMessages[person.id]) {
-        state.dmMessages[person.id] = [
-          { sender: 'them', text: `Hey! Thanks for visiting my profile. How is your day going? 😊` }
-        ];
+        state.dmMessages[person.id] = [];
       }
       renderDMMessages();
     }
@@ -1339,22 +1318,6 @@ document.addEventListener('DOMContentLoaded', () => {
       state.dmMessages[state.dmPartner.id].push({ sender: 'me', text });
       renderDMMessages();
       SoundFX.playBeep(750, 'sine', 0.08, 0.1);
-
-      // Simulated reply fallback
-      setTimeout(() => {
-        const replies = [
-          "That's so cool! Tell me more ✨",
-          "Aww nice! Do you want to jump on a video call? 📹",
-          "Haha love that! 😄 What music do you listen to?",
-          "Awesome! I'm online right now!"
-        ];
-        const randomReply = replies[Math.floor(Math.random() * replies.length)];
-        if (state.dmPartner && state.dmMessages[state.dmPartner.id]) {
-          state.dmMessages[state.dmPartner.id].push({ sender: 'them', text: randomReply });
-          renderDMMessages();
-          SoundFX.playBeep(850, 'sine', 0.1, 0.1);
-        }
-      }, 1500);
     }
 
     elements.dmInput.value = '';
@@ -1484,13 +1447,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!text) return;
       appendCallChatBubble('You', text);
       elements.callChatInput.value = '';
-
-      // Reply simulation
-      setTimeout(() => {
-        if (state.inCall && state.currentPartner) {
-          appendCallChatBubble(state.currentPartner.name, '😊✨');
-        }
-      }, 1400);
     });
 
     // DM Modal Handlers
