@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ================= DEMO ONLINE USERS DATABASE =================
   const PEOPLE_DATABASE = [
     {
-      id: 'usr_1',
+      id: '0925d6a1-fad0-436d-9c0f-c5d6177f5a06',
       name: 'Elena Rostova',
       gender: 'female',
       age: 22,
@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
       bio: 'Love dancing, travel, and deep late night talks! 💃✨'
     },
     {
-      id: 'usr_2',
+      id: 'a53ccf35-ea07-4ed9-8173-04dab36ae3a8',
       name: 'Sophia Rossi',
       gender: 'female',
       age: 24,
@@ -1179,6 +1179,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!state.inCall) return;
     state.inCall = false;
 
+    if (socket && socket.connected && targetPeerSocketId) {
+      socket.emit('end-call', { targetSocketId: targetPeerSocketId });
+    }
+    targetPeerSocketId = null;
+
     if (state.callTimerInterval) clearInterval(state.callTimerInterval);
     if (partnerCanvasAnimFrame) cancelAnimationFrame(partnerCanvasAnimFrame);
 
@@ -1501,11 +1506,13 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.callBtnNext.addEventListener('click', nextMatch);
     if (elements.callBtnReport) {
       elements.callBtnReport.addEventListener('click', () => {
-        if (state.currentPartner) {
+        if (!state.currentPartner) return;
+        const confirmReport = confirm(`Are you sure you want to report and block ${getFirstName(state.currentPartner.name)}?`);
+        if (confirmReport) {
           dbBlockUser(state.currentPartner.id);
+          showToast('🛡️ User reported & blocked. Finding next match...');
+          nextMatch();
         }
-        showToast('🛡️ User reported & blocked. Finding next match...');
-        nextMatch();
       });
     }
     
