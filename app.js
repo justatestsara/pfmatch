@@ -634,10 +634,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const guestId = Math.floor(Math.random() * 1000000);
     const guestEmail = `guest_${guestId}@cutylive.app`;
     const guestPassword = `guest_pass_${guestId}`;
-    
-    const randomNames = ['Alex', 'Emma', 'Taylor', 'Jordan', 'Sam', 'Chris', 'Jamie', 'Morgan', 'Casey', 'Robin'];
-    const guestName = randomNames[Math.floor(Math.random() * randomNames.length)];
-    
+    const guestName = `Guest_${guestId}`;
     const randomGender = Math.random() > 0.5 ? 'female' : 'male';
 
     await handleSignUp(guestEmail, guestPassword, guestName, randomGender);
@@ -747,11 +744,10 @@ document.addEventListener('DOMContentLoaded', () => {
         socket = io();
         socket.on('connect', () => {
           console.log('[Cuty WebRTC] Connected to signaling server:', socket.id);
-          const randomNames = ['Alex', 'Emma', 'Taylor', 'Jordan', 'Sam', 'Chris', 'Jamie', 'Morgan', 'Casey', 'Robin'];
-          const randomName = randomNames[Math.floor(Math.random() * randomNames.length)];
+          const guestId = Math.floor(Math.random() * 1000000);
           socket.emit('register-user', {
-            id: 'usr_me_' + Math.floor(Math.random() * 1000),
-            name: randomName,
+            id: 'usr_me_' + guestId,
+            name: `Guest_${guestId}`,
             gender: 'female',
             coins: state.coins
           });
@@ -760,6 +756,33 @@ document.addEventListener('DOMContentLoaded', () => {
         socket.on('online-count-update', (count) => {
           const badge = document.getElementById('people-online-count');
           if (badge) badge.textContent = count > 1 ? count + 24 : 24;
+        });
+
+        socket.on('incoming-direct-call', (data) => {
+          SoundFX.playBeep(600, 'sine', 0.5, 0.4);
+          const callerName = getFirstName(data.caller.name);
+          const accept = confirm(`📞 Incoming Call from ${callerName}\nClick OK to Accept, Cancel to Decline`);
+          
+          if (accept) {
+            socket.emit('direct-call-accept', { targetSocketId: data.callerSocketId });
+            targetPeerSocketId = data.callerSocketId;
+            launchRealWebRTCCall(data.caller, false);
+          } else {
+            socket.emit('direct-call-decline', { targetSocketId: data.callerSocketId });
+          }
+        });
+
+        socket.on('direct-call-accept', async (data) => {
+          if (dialingTimeout) clearTimeout(dialingTimeout);
+          showToast('Call accepted! Connecting...');
+          targetPeerSocketId = data.partnerSocketId;
+          launchRealWebRTCCall(state.currentPartner || {}, true);
+        });
+
+        socket.on('direct-call-decline', () => {
+          if (dialingTimeout) clearTimeout(dialingTimeout);
+          showToast('Call declined. Loading profile feed...');
+          launchVideoCall(state.currentPartner || {}, false);
         });
 
         socket.on('match-found', async (data) => {
@@ -1020,6 +1043,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ================= RANDOM VIDEO MATCH ENGINE =================
   let isSearchingMatch = false;
+  let dialingTimeout = null;
 
   async function startRandomMatch() {
     if (state.coins < 1) {
@@ -1212,10 +1236,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const durationStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 
       state.callHistory.unshift({
+        id: state.currentPartner.id,
         name: state.currentPartner.name,
         flag: state.currentPartner.flag,
         duration: durationStr,
-        avatar: state.currentPartner.avatar
+        avatar: state.currentPartner.avatar,
+        country: state.currentPartner.country
       });
       renderCallHistory();
     }
@@ -1322,6 +1348,29 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ================= PEOPLE TAB (DIRECT CALL & DM) =================
+  function initiateDirectCall(person) {
+    if (state.coins < 1) {
+      showToast('⚠️ You need at least 1 coin to start a call!');
+      openCoinStore();
+      return;
+    }
+
+    state.currentPartner = person;
+
+    if (socket && socket.connected) {
+      showToast(`Calling ${getFirstName(person.name)}...`);
+      socket.emit('direct-call-request', { targetUserId: person.id });
+      
+      if (dialingTimeout) clearTimeout(dialingTimeout);
+      dialingTimeout = setTimeout(() => {
+        showToast(`No answer from ${getFirstName(person.name)}. Loading profile feed...`);
+        launchVideoCall(person, false);
+      }, 8000);
+    } else {
+      launchVideoCall(person, false);
+    }
+  }
+
   function renderPeopleGrid(list) {
     if (!elements.peopleGrid) return;
     elements.peopleGrid.innerHTML = '';
@@ -1354,12 +1403,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Event listeners for DM and Direct Call
       card.querySelector('.btn-card-text').addEventListener('click', () => openDMModal(person));
       card.querySelector('.btn-card-call').addEventListener('click', () => {
-        if (state.coins < 1) {
-          showToast('⚠️ You need at least 1 coin to start a call!');
-          openCoinStore();
-          return;
-        }
-        launchVideoCall(person);
+        initiateDirectCall(person);
       });
 
       elements.peopleGrid.appendChild(card);
@@ -1443,6 +1487,7 @@ document.addEventListener('DOMContentLoaded', () => {
     state.callHistory.forEach(item => {
       const el = document.createElement('div');
       el.className = 'history-item';
+      el.style.cursor = 'pointer';
       el.innerHTML = `
         <div class="history-user">
           <img src="${item.avatar}" alt="${getFirstName(item.name)}" class="history-avatar" />
@@ -1453,6 +1498,25 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <div class="history-duration">⏱️ ${item.duration}</div>
       `;
+
+      el.addEventListener('click', () => {
+        const person = PEOPLE_DATABASE.find(p => p.name === item.name) || {
+          id: item.id || 'usr_temp',
+          name: item.name,
+          avatar: item.avatar,
+          flag: item.flag,
+          country: item.country || 'Global',
+          rate: '1 coin/min'
+        };
+
+        const choice = confirm(`📞 Call ${getFirstName(item.name)}?\n(Click Cancel to send a Message instead)`);
+        if (choice) {
+          initiateDirectCall(person);
+        } else {
+          openDMModal(person);
+        }
+      });
+
       elements.callHistoryList.appendChild(el);
     });
   }

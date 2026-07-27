@@ -124,6 +124,23 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('direct-call-accept', (data) => {
+    if (data && data.targetSocketId) {
+      io.to(data.targetSocketId).emit('direct-call-accept', {
+        partnerSocketId: socket.id
+      });
+      // Register direct call mapping in activeCalls
+      const callId = `call_${Date.now()}`;
+      activeCalls.set(callId, { peer1: socket.id, peer2: data.targetSocketId });
+    }
+  });
+
+  socket.on('direct-call-decline', (data) => {
+    if (data && data.targetSocketId) {
+      io.to(data.targetSocketId).emit('direct-call-decline');
+    }
+  });
+
   // Direct Message Relay
   socket.on('send-direct-message', (data) => {
     const targetSocket = Array.from(onlineUsers.values()).find(u => u.id === data.targetUserId);
