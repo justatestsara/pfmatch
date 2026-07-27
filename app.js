@@ -25,10 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     callDurationSeconds: 0,
     callTimerInterval: null,
     audioMuted: false,
-    callHistory: [
-      { name: 'Elena Rostova', flag: '🇷🇺', duration: '03:14', avatar: '/Profile Images/imgi_14_thumb_32f22d27a0.jpg' },
-      { name: 'Chloe Dubois', flag: '🇫🇷', duration: '05:40', avatar: '/Profile Images/imgi_22_thumb_1760b3e140.jpg' },
-    ],
+    callHistory: [],
     dmPartner: null,
     dmMessages: {}
   };
@@ -545,6 +542,25 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('my-profile-avatar').src = data.avatar_url;
         document.getElementById('radar-user-avatar').src = data.avatar_url;
         
+        // Update dynamic badge and ID info
+        const profileBadge = document.getElementById('my-profile-badge');
+        if (profileBadge) {
+          const isFemale = data.gender === 'female';
+          profileBadge.className = `gender-age-badge ${isFemale ? 'female' : 'male'}`;
+          profileBadge.innerHTML = `${isFemale ? '♀' : '♂'} ${data.age || 18}`;
+        }
+
+        const idDisplay = document.getElementById('my-profile-id-display');
+        if (idDisplay) {
+          idDisplay.textContent = data.id.substring(0, 8).toUpperCase();
+        }
+
+        const flagEl = document.querySelector('.profile-id .flag');
+        if (flagEl) {
+          const flags = { 'Russia': '🇷🇺 Russia', 'Italy': '🇮🇹 Italy', 'Global': '🌍 Global' };
+          flagEl.innerHTML = flags[data.country] || '🌍 Global';
+        }
+        
         // Update online status in database
         await db
           .from('cuty_profiles')
@@ -580,12 +596,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Auth Operations
-  async function handleSignUp(email, password, username, gender) {
+  async function handleSignUp(email, password, username, gender, age) {
     if (!db) {
       showToast('⚠️ Please link your Supabase database first!');
       return;
     }
     try {
+      const defaultAvatar = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="%23888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
       const { data, error } = await db.auth.signUp({
         email,
         password,
@@ -594,7 +611,9 @@ document.addEventListener('DOMContentLoaded', () => {
             username,
             gender,
             country: 'Global',
-            avatar_url: '/Profile Images/imgi_14_thumb_32f22d27a0.jpg'
+            avatar_url: defaultAvatar,
+            age: age,
+            rules_accepted: true
           }
         }
       });
@@ -604,7 +623,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (data.user && !data.session) {
         showToast('✉️ Account created! Please confirm your email address to log in.');
       } else {
-        showToast('Account created successfully! Logging in...');
+        showToast('🎉 Registration successful! Logging in...');
         setTimeout(() => {
           handleSignIn(email, password);
         }, 800);
@@ -1724,8 +1743,75 @@ document.addEventListener('DOMContentLoaded', () => {
       const email = document.getElementById('reg-email').value.trim();
       const pass = document.getElementById('reg-password').value;
       const gender = document.getElementById('reg-gender').value;
-      handleSignUp(email, pass, username, gender);
+      const age = parseInt(document.getElementById('reg-age').value);
+      const agree = document.getElementById('reg-agree').checked;
+
+      if (!agree) {
+        showToast('⚠️ You must agree to the community guidelines to register!');
+        return;
+      }
+
+      // Google Play safety compliance rules prompt
+      const rules = `⚠️ COMMUNITY SAFETY GUIDELINES ⚠️\n\n` +
+        `To ensure a safe environment, please agree to the following:\n` +
+        `• No nudity or sexually suggestive content is permitted.\n` +
+        `• Harassment, hate speech, bullying, or abuse is strictly forbidden.\n` +
+        `• Do not record or capture screens of other users without consent.\n\n` +
+        `Violators will be permanently blocked and banned from the platform.\n\n` +
+        `Click OK to accept these rules and complete your registration.`;
+      
+      const accepted = confirm(rules);
+      if (accepted) {
+        handleSignUp(email, pass, username, gender, age);
+      }
     });
+
+    // Profile Photo Upload listener
+    const avatarImg = document.getElementById('my-profile-avatar');
+    const uploadInput = document.getElementById('profile-avatar-upload-input');
+    
+    if (avatarImg && uploadInput) {
+      avatarImg.addEventListener('click', () => {
+        uploadInput.click();
+      });
+
+      uploadInput.addEventListener('change', async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Size check (max 1MB for base64 optimization)
+        if (file.size > 1 * 1024 * 1024) {
+          showToast('⚠️ Photo must be smaller than 1MB!');
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          const base64Data = e.target.result;
+          
+          avatarImg.src = base64Data;
+          const radarAvatar = document.getElementById('radar-user-avatar');
+          if (radarAvatar) radarAvatar.src = base64Data;
+
+          if (db && currentUser) {
+            try {
+              showToast('📤 Uploading photo...');
+              const { error } = await db
+                .from('cuty_profiles')
+                .update({ avatar_url: base64Data, updated_at: new Date() })
+                .eq('id', currentUser.id);
+
+              if (error) throw error;
+              showToast('✅ Profile picture updated!');
+            } catch (err) {
+              console.log('Error saving avatar:', err);
+              showToast('❌ Failed to save profile picture.');
+            }
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    }
   }
 
   // Start Application

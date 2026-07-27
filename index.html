@@ -133,21 +133,17 @@
             
             <!-- User Header Card -->
             <div class="profile-card">
-              <div class="profile-avatar-wrapper">
-                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80" alt="Profile Avatar" class="profile-avatar" id="my-profile-avatar" />
+              <div class="profile-avatar-wrapper" style="cursor: pointer;" title="Click to upload profile photo">
+                <img src="" alt="Profile Avatar" class="profile-avatar" id="my-profile-avatar" />
                 <span class="online-indicator"></span>
+                <input type="file" id="profile-avatar-upload-input" accept="image/*" style="display: none;" />
               </div>
               <div class="profile-info">
                 <div class="profile-name-row">
                   <h3 id="my-profile-name">Alex Johnson</h3>
-                  <span class="gender-age-badge female">♀ 22</span>
+                  <span class="gender-age-badge female" id="my-profile-badge">♀ 22</span>
                 </div>
-                <p class="profile-id">ID: 89402194 • <span class="flag">🇺🇸 USA</span></p>
-                <div class="profile-tags">
-                  <span class="tag">✨ Friendly</span>
-                  <span class="tag">🎵 Music Lover</span>
-                  <span class="tag">✈️ Travel</span>
-                </div>
+                <p class="profile-id">ID: <span id="my-profile-id-display">89402194</span> • <span class="flag">🌍 Global</span></p>
               </div>
             </div>
 
@@ -172,22 +168,20 @@
               <button class="btn-buy-coins" id="profile-buy-coins-btn">
                 <i data-lucide="shopping-bag"></i> Buy Coins
               </button>
-            </div>
+             <!-- Recent Call History -->
+             <div class="section-title">
+               <i data-lucide="clock"></i> Recent Call History
+             </div>
+             <div class="call-history-list" id="call-history-list">
+               <!-- Populated by JS -->
+             </div>
 
-            <!-- Log Out Button -->
-            <button class="btn-logout" id="btn-logout">
-              <i data-lucide="log-out"></i> Log Out
-            </button>
+             <!-- Log Out Button -->
+             <button class="btn-logout" id="btn-logout" style="margin-bottom: 24px;">
+               <i data-lucide="log-out"></i> Log Out
+             </button>
 
-            <!-- Recent Call History -->
-            <div class="section-title">
-              <i data-lucide="clock"></i> Recent Call History
-            </div>
-            <div class="call-history-list" id="call-history-list">
-              <!-- Populated by JS -->
-            </div>
-
-          </div>
+           </div>
         </section>
 
       </main>
@@ -267,7 +261,17 @@
                 <option value="male">Male 👨</option>
               </select>
             </div>
-            <button type="submit" class="btn-auth-submit">Create Account</button>
+            <div class="form-group">
+              <label>Age (Must be 18+)</label>
+              <input type="number" id="reg-age" required min="18" max="99" value="18" />
+            </div>
+            <div class="form-group checkbox-group" style="display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; cursor: pointer;">
+              <input type="checkbox" id="reg-agree" required style="width: auto; margin-top: 3px;" />
+              <label for="reg-agree" style="font-size: 11px; color: var(--text-sub); line-height: 1.4; font-weight: 500;">
+                I confirm that I am 18+ and agree to the community safety rules.
+              </label>
+            </div>
+            <button type="submit" class="btn-auth-submit" style="margin-top: 16px;">Create Account</button>
           </form>
 
         </div>
