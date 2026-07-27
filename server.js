@@ -30,12 +30,35 @@ io.on('connection', (socket) => {
 
   // User Registration
   socket.on('register-user', (userProfile) => {
+    let name = userProfile.name || 'Anonymous Cuty User';
+    let gender = userProfile.gender || 'female';
+    let avatar = userProfile.avatar || '/Profile Images/imgi_14_thumb_32f22d27a0.jpg';
+
+    // If it's a guest user account, override it to be a female model profile!
+    if (name.startsWith('Guest_')) {
+      const femaleNames = ['Elena', 'Sophia', 'Chloe', 'Maya', 'Emma', 'Isabella', 'Aria', 'Olivia', 'Zara', 'Mia', 'Lily', 'Sofia', 'Ava', 'Luna', 'Zoe', 'Mila', 'Ella', 'Camila', 'Layla'];
+      name = femaleNames[Math.floor(Math.random() * femaleNames.length)];
+      gender = 'female';
+      
+      const profileImages = [
+        'imgi_14_thumb_32f22d27a0.jpg', 'imgi_19_thumb_23e5bcff0c.jpg', 'imgi_22_thumb_1760b3e140.jpg',
+        'imgi_22_thumb_6a7b87e5aa.jpg', 'imgi_23_thumb_bac15870c7.jpg', 'imgi_26_thumb_294ef15058.jpg',
+        'imgi_28_thumb_21e4952114.jpg', 'imgi_29_thumb_1a17a016ac.jpg', 'imgi_31_thumb_848a38c3ff.jpg',
+        'imgi_32_thumb_2cc404b9e2.jpg', 'imgi_32_thumb_85628c8d0e.jpg', 'imgi_34_thumb_5aaa875450.jpg',
+        'imgi_35_thumb_86f09eb120.jpg', 'imgi_39_thumb_9a6017c292.jpg', 'imgi_3_thumb_1c308df074.jpg',
+        'imgi_40_thumb_988bbaac3d.jpg', 'imgi_45_thumb_aa800007a0.jpg', 'imgi_4_thumb_8489afdea9.jpg',
+        'imgi_6_thumb_12c7bc526d.jpg', 'imgi_8_thumb_42dfbb79c3.jpg', 'imgi_8_thumb_9350032849.jpg'
+      ];
+      const randomImg = profileImages[Math.floor(Math.random() * profileImages.length)];
+      avatar = `/Profile Images/${randomImg}`;
+    }
+
     const user = {
       socketId: socket.id,
       id: userProfile.id || `usr_${Math.random().toString(36).substr(2, 9)}`,
-      name: userProfile.name || 'Anonymous Cuty User',
-      gender: userProfile.gender || 'female',
-      avatar: userProfile.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300',
+      name: name,
+      gender: gender,
+      avatar: avatar,
       coins: userProfile.coins || 30
     };
     onlineUsers.set(socket.id, user);

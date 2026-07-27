@@ -470,21 +470,9 @@ document.addEventListener('DOMContentLoaded', () => {
   let myProfile = null;
 
   function initSupabase() {
-    let url = localStorage.getItem('supabase_url');
-    let key = localStorage.getItem('supabase_key');
-
-    // Sanitizer: clear invalid/blank settings inputs
-    if (url === 'undefined' || url === 'null' || (url && url.trim() === '')) {
-      localStorage.removeItem('supabase_url');
-      url = null;
-    }
-    if (key === 'undefined' || key === 'null' || (key && key.trim() === '')) {
-      localStorage.removeItem('supabase_key');
-      key = null;
-    }
-
-    url = url || 'https://blxdnakypaawuktjufme.supabase.co';
-    key = key || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJseGRuYWt5cGFhd3VrdGp1Zm1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjgxODYsImV4cCI6MjA5NDcwNDE4Nn0.nQzOnYHn5Ocz-poVSfemBIRYEy1WHbXB3Hip7a20QfY';
+    // Strictly enforce production database connection credentials
+    const url = 'https://blxdnakypaawuktjufme.supabase.co';
+    const key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJseGRuYWt5cGFhd3VrdGp1Zm1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjgxODYsImV4cCI6MjA5NDcwNDE4Nn0.nQzOnYHn5Ocz-poVSfemBIRYEy1WHbXB3Hip7a20QfY';
 
     if (url && key && typeof window.supabase !== 'undefined') {
       try {
