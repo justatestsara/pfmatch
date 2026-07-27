@@ -174,7 +174,10 @@
               </button>
             </div>
 
-
+            <!-- Log Out Button -->
+            <button class="btn-logout" id="btn-logout">
+              <i data-lucide="log-out"></i> Log Out
+            </button>
 
             <!-- Recent Call History -->
             <div class="section-title">
@@ -217,9 +220,6 @@
       <!-- ================= AUTHENTICATION OVERLAY ================= -->
       <div id="auth-overlay" class="auth-overlay active">
         <div class="auth-card">
-          <button class="btn-config-gear" id="btn-auth-config" title="Database Settings">
-            <i data-lucide="settings"></i>
-          </button>
           
           <div class="auth-header">
             <span class="auth-logo">💖</span>
@@ -270,31 +270,6 @@
             <button type="submit" class="btn-auth-submit">Create Account</button>
           </form>
 
-          <!-- Guest Login -->
-          <div class="auth-divider"><span>or</span></div>
-          <button class="btn-guest-login" id="btn-guest-login">
-            <i data-lucide="user-check"></i> Play as Guest
-          </button>
-        </div>
-
-        <!-- Supabase Settings Modal Overlay -->
-        <div id="auth-config-modal" class="auth-config-modal">
-          <div class="config-modal-card">
-            <h4>Supabase Project Settings</h4>
-            <p class="config-subtitle">Link your own real-time database credentials</p>
-            <div class="form-group">
-              <label>Supabase URL</label>
-              <input type="text" id="supabase-url-input" placeholder="https://xxxx.supabase.co" />
-            </div>
-            <div class="form-group">
-              <label>Supabase Anon Key</label>
-              <input type="password" id="supabase-key-input" placeholder="eyJhbGciOi..." />
-            </div>
-            <div class="config-actions">
-              <button class="btn-config-save" id="btn-config-save">Save & Connect</button>
-              <button class="btn-config-cancel" id="btn-config-cancel">Cancel</button>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -418,6 +393,36 @@
         </div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- ================= PROFILE DETAILS MODAL ================= -->
+  <div id="profile-detail-modal" class="profile-detail-modal-overlay">
+    <div class="profile-detail-card">
+      <button class="btn-close-profile-detail" id="btn-close-profile-detail">
+        <i data-lucide="x"></i>
+      </button>
+      <div class="profile-detail-header">
+        <img src="" alt="Avatar" class="profile-detail-avatar" id="profile-detail-avatar" />
+        <span class="detail-status-dot">🟢 Online</span>
+      </div>
+      <div class="profile-detail-body">
+        <div class="detail-name-row">
+          <h2 id="profile-detail-name">Elena</h2>
+          <span class="detail-flag" id="profile-detail-flag">🇷🇺</span>
+        </div>
+        <p class="detail-meta"><span id="profile-detail-country">Russia</span> • <span id="profile-detail-age">22</span> years old</p>
+        <p class="detail-bio" id="profile-detail-bio">Love dancing, travel, and deep late night talks! 💃✨</p>
+        
+        <div class="detail-actions">
+          <button class="btn-detail-text" id="btn-detail-text">
+            <i data-lucide="message-circle"></i> Text
+          </button>
+          <button class="btn-detail-call" id="btn-detail-call">
+            <i data-lucide="video"></i> Call
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 

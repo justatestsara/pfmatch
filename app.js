@@ -385,6 +385,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Profile View
     callHistoryList: document.getElementById('call-history-list'),
+    logoutBtn: document.getElementById('btn-logout'),
+
+    // Profile Detail Modal
+    profileDetailModal: document.getElementById('profile-detail-modal'),
+    profileDetailAvatar: document.getElementById('profile-detail-avatar'),
+    profileDetailName: document.getElementById('profile-detail-name'),
+    profileDetailFlag: document.getElementById('profile-detail-flag'),
+    profileDetailCountry: document.getElementById('profile-detail-country'),
+    profileDetailAge: document.getElementById('profile-detail-age'),
+    profileDetailBio: document.getElementById('profile-detail-bio'),
+    closeProfileDetailBtn: document.getElementById('btn-close-profile-detail'),
+    detailTextBtn: document.getElementById('btn-detail-text'),
+    detailCallBtn: document.getElementById('btn-detail-call'),
 
     // Call Modal
     callModal: document.getElementById('call-modal'),
@@ -429,15 +442,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Supabase Auth Elements
     authOverlay: document.getElementById('auth-overlay'),
-    authConfigModal: document.getElementById('auth-config-modal'),
-    btnAuthConfig: document.getElementById('btn-auth-config'),
-    supabaseUrlInput: document.getElementById('supabase-url-input'),
-    supabaseKeyInput: document.getElementById('supabase-key-input'),
-    btnConfigSave: document.getElementById('btn-config-save'),
-    btnConfigCancel: document.getElementById('btn-config-cancel'),
     loginForm: document.getElementById('login-form'),
     registerForm: document.getElementById('register-form'),
-    btnGuestLogin: document.getElementById('btn-guest-login'),
     tabLoginBtn: document.getElementById('tab-login-btn'),
     tabRegisterBtn: document.getElementById('tab-register-btn')
   };
@@ -630,18 +636,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  async function handleGuestLogin() {
-    const guestId = Math.floor(Math.random() * 1000000);
-    const guestEmail = `guest_${guestId}@cutylive.app`;
-    const guestPassword = `guest_pass_${guestId}`;
-    const guestName = `Guest_${guestId}`;
-    const randomGender = Math.random() > 0.5 ? 'female' : 'male';
-
-    await handleSignUp(guestEmail, guestPassword, guestName, randomGender);
-    setTimeout(() => {
-      handleSignIn(guestEmail, guestPassword);
-    }, 1200);
-  }
 
   // Direct Message Sync
   async function dbSendDM(receiverUserId, text) {
@@ -1506,15 +1500,12 @@ document.addEventListener('DOMContentLoaded', () => {
           avatar: item.avatar,
           flag: item.flag,
           country: item.country || 'Global',
-          rate: '1 coin/min'
+          rate: '1 coin/min',
+          age: 22,
+          bio: 'Love dancing, travel, and deep late night talks! 💃✨'
         };
 
-        const choice = confirm(`📞 Call ${getFirstName(item.name)}?\n(Click Cancel to send a Message instead)`);
-        if (choice) {
-          initiateDirectCall(person);
-        } else {
-          openDMModal(person);
-        }
+        openProfileDetail(person);
       });
 
       elements.callHistoryList.appendChild(el);
@@ -1536,6 +1527,26 @@ document.addEventListener('DOMContentLoaded', () => {
     SoundFX.playCoinAdd();
     showToast(`🎉 Purchase Successful! Added ${coins} coins.`);
     closeCoinStore();
+  }
+
+  // ================= PROFILE DETAILS MODAL VIEW =================
+  let activeDetailPerson = null;
+
+  function openProfileDetail(person) {
+    activeDetailPerson = person;
+    if (elements.profileDetailAvatar) elements.profileDetailAvatar.src = person.avatar;
+    if (elements.profileDetailName) elements.profileDetailName.textContent = getFirstName(person.name);
+    if (elements.profileDetailFlag) elements.profileDetailFlag.textContent = person.flag;
+    if (elements.profileDetailCountry) elements.profileDetailCountry.textContent = person.country;
+    if (elements.profileDetailAge) elements.profileDetailAge.textContent = person.age;
+    if (elements.profileDetailBio) elements.profileDetailBio.textContent = person.bio || "No bio details provided.";
+    
+    if (elements.profileDetailModal) elements.profileDetailModal.classList.add('active');
+  }
+
+  function closeProfileDetail() {
+    if (elements.profileDetailModal) elements.profileDetailModal.classList.remove('active');
+    activeDetailPerson = null;
   }
 
   // ================= EVENT LISTENERS SETUP =================
@@ -1645,31 +1656,47 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Supabase Auth Settings Dialog
-    elements.btnAuthConfig.addEventListener('click', () => {
-      elements.supabaseUrlInput.value = localStorage.getItem('supabase_url') || '';
-      elements.supabaseKeyInput.value = localStorage.getItem('supabase_key') || '';
-      elements.authConfigModal.classList.add('active');
-    });
+    // Profile Detail Modal Action Bindings
+    if (elements.closeProfileDetailBtn) {
+      elements.closeProfileDetailBtn.addEventListener('click', closeProfileDetail);
+    }
 
-    elements.btnConfigCancel.addEventListener('click', () => {
-      elements.authConfigModal.classList.remove('active');
-    });
+    if (elements.detailTextBtn) {
+      elements.detailTextBtn.addEventListener('click', () => {
+        if (activeDetailPerson) {
+          closeProfileDetail();
+          openDMModal(activeDetailPerson);
+        }
+      });
+    }
 
-    elements.btnConfigSave.addEventListener('click', () => {
-      const url = elements.supabaseUrlInput.value.trim();
-      const key = elements.supabaseKeyInput.value.trim();
+    if (elements.detailCallBtn) {
+      elements.detailCallBtn.addEventListener('click', () => {
+        if (activeDetailPerson) {
+          closeProfileDetail();
+          initiateDirectCall(activeDetailPerson);
+        }
+      });
+    }
 
-      if (url && key) {
-        localStorage.setItem('supabase_url', url);
-        localStorage.setItem('supabase_key', key);
-        elements.authConfigModal.classList.remove('active');
-        showToast('🔑 Credentials saved. Re-connecting...');
-        initSupabase();
-      } else {
-        showToast('⚠️ Please enter both URL and Key!');
-      }
-    });
+    // Log Out Button Action
+    if (elements.logoutBtn) {
+      elements.logoutBtn.addEventListener('click', async () => {
+        if (db) {
+          try {
+            await db.auth.signOut();
+          } catch (err) {
+            console.log("Error signing out:", err);
+          }
+        }
+        currentUser = null;
+        state.coins = 0;
+        renderCoinBalance();
+        showToast('🚪 Logged out successfully!');
+        if (elements.authOverlay) elements.authOverlay.classList.add('active');
+        switchView('view-random');
+      });
+    }
 
     // Auth Form Toggle (Login / Register)
     elements.tabLoginBtn.addEventListener('click', () => {
@@ -1702,11 +1729,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const pass = document.getElementById('reg-password').value;
       const gender = document.getElementById('reg-gender').value;
       handleSignUp(email, pass, username, gender);
-    });
-
-    // Guest Button Trigger
-    elements.btnGuestLogin.addEventListener('click', () => {
-      handleGuestLogin();
     });
   }
 
