@@ -606,13 +606,21 @@ document.addEventListener('DOMContentLoaded', () => {
             username,
             gender,
             country: 'Global',
-            avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'
+            avatar_url: '/Profile Images/imgi_14_thumb_32f22d27a0.jpg'
           }
         }
       });
 
       if (error) throw error;
-      showToast('Account created successfully! Logging in...');
+      
+      if (data.user && !data.session) {
+        showToast('✉️ Account created! Please confirm your email address to log in.');
+      } else {
+        showToast('Account created successfully! Logging in...');
+        setTimeout(() => {
+          handleSignIn(email, password);
+        }, 800);
+      }
     } catch (err) {
       showToast(`❌ Error: ${err.message}`);
     }
