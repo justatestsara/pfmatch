@@ -8,6 +8,12 @@ document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
   }
 
+  // ================= UTILS & HELPERS =================
+  function getFirstName(fullName) {
+    if (!fullName) return '';
+    return fullName.trim().split(' ')[0];
+  }
+
   // ================= STATE MANAGEMENT =================
   const state = {
     coins: 30, // 1 coin = 1 minute talking time
@@ -550,6 +556,17 @@ document.addEventListener('DOMContentLoaded', () => {
           .from('cuty_profiles')
           .update({ online_status: 'online', updated_at: new Date() })
           .eq('id', userId);
+
+        // Register user on socket server with correct username
+        if (socket && socket.connected) {
+          socket.emit('register-user', {
+            id: userId,
+            name: data.username,
+            gender: data.gender || 'female',
+            coins: data.coins,
+            avatar: data.avatar_url
+          });
+        }
       }
     } catch (err) {
       console.log('Error loading profile:', err.message);
@@ -727,9 +744,11 @@ document.addEventListener('DOMContentLoaded', () => {
         socket = io();
         socket.on('connect', () => {
           console.log('[Cuty WebRTC] Connected to signaling server:', socket.id);
+          const randomNames = ['Alex', 'Emma', 'Taylor', 'Jordan', 'Sam', 'Chris', 'Jamie', 'Morgan', 'Casey', 'Robin'];
+          const randomName = randomNames[Math.floor(Math.random() * randomNames.length)];
           socket.emit('register-user', {
             id: 'usr_me_' + Math.floor(Math.random() * 1000),
-            name: 'Alex Johnson',
+            name: randomName,
             gender: 'female',
             coins: state.coins
           });
@@ -761,6 +780,28 @@ document.addEventListener('DOMContentLoaded', () => {
         socket.on('peer-ended-call', () => {
           showToast('Partner left the call');
           nextMatch();
+        });
+
+        socket.on('call-text-message', (data) => {
+          const partnerName = state.currentPartner ? getFirstName(state.currentPartner.name) : 'Partner';
+          appendCallChatBubble(partnerName, data.text);
+        });
+
+        socket.on('call-gift', (data) => {
+          const partnerName = state.currentPartner ? getFirstName(state.currentPartner.name) : 'Partner';
+          const giftNames = { rose: 'Rose 🌹', diamond: 'Diamond 💎', crown: 'Crown 👑', car: 'Supercar 🏎️' };
+          const giftCosts = { rose: 1, diamond: 5, crown: 10, car: 25 };
+          
+          showToast(`🎁 Received ${giftNames[data.giftType]} from partner!`);
+          SoundFX.playGiftPop();
+          appendCallChatBubble('System', `${partnerName} sent ${giftNames[data.giftType]}!`, true);
+          triggerGiftParticles(data.giftType);
+
+          // Credit coins to receiver
+          const addedCoins = giftCosts[data.giftType] || 0;
+          state.coins += addedCoins;
+          renderCoinBalance();
+          updateDBCoins(state.coins);
         });
       } catch (err) {
         console.log('Standalone mode without active socket server.');
@@ -991,7 +1032,7 @@ document.addEventListener('DOMContentLoaded', () => {
     state.callDurationSeconds = 0;
 
     // Populate Partner UI
-    elements.callPartnerName.textContent = partner.name;
+    elements.callPartnerName.textContent = getFirstName(partner.name);
     elements.callPartnerFlag.textContent = partner.flag;
     elements.callPartnerLocation.textContent = partner.country;
     elements.callPartnerAvatar.src = partner.avatar;
@@ -1003,11 +1044,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Setup Remote Partner Video Feed (Realistic Canvas Generator for demo)
     setupRemotePartnerCanvas(partner);
-
-    // Initial Welcome Chat Bubble
-    setTimeout(() => {
-      appendCallChatBubble(partner.name, `Hi there! 👋 Happy to talk with you!`);
-    }, 1200);
 
     // Start 1 Coin = 1 Minute Timer
     startCallTimer();
@@ -1131,7 +1167,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isSystem) {
       bubble.textContent = text;
     } else {
-      bubble.innerHTML = `<span class="chat-author">${author}:</span> ${text}`;
+      bubble.innerHTML = `<span class="chat-author">${getFirstName(author)}:</span> ${text}`;
     }
 
     elements.callChatOverlay.appendChild(bubble);
@@ -1157,6 +1193,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Trigger Canvas Particle Fireworks
     triggerGiftParticles(giftType);
+
+    if (socket && socket.connected && targetPeerSocketId) {
+      socket.emit('call-gift', { targetSocketId: targetPeerSocketId, giftType: giftType });
+    }
   }
 
   function triggerGiftParticles(giftType) {
@@ -1220,13 +1260,13 @@ document.addEventListener('DOMContentLoaded', () => {
       card.className = 'person-card';
       card.innerHTML = `
         <div class="person-thumb-wrapper">
-          <img src="${person.avatar}" alt="${person.name}" class="person-thumb" />
+          <img src="${person.avatar}" alt="${getFirstName(person.name)}" class="person-thumb" />
           <span class="card-status-dot">🟢 Online</span>
           <span class="card-rate-tag">${person.rate}</span>
         </div>
         <div class="person-body">
           <div class="person-name-row">
-            <span class="person-name">${person.name}</span>
+            <span class="person-name">${getFirstName(person.name)}</span>
           </div>
           <span class="person-meta">${person.flag} ${person.country} • ${person.age}y</span>
           <div class="person-actions-row">
@@ -1276,7 +1316,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ================= DIRECT MESSAGING (DM) MODAL =================
   function openDMModal(person) {
     state.dmPartner = person;
-    elements.dmPartnerName.textContent = person.name;
+    elements.dmPartnerName.textContent = getFirstName(person.name);
     elements.dmPartnerAvatar.src = person.avatar;
 
     if (db && currentUser) {
@@ -1447,6 +1487,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!text) return;
       appendCallChatBubble('You', text);
       elements.callChatInput.value = '';
+
+      if (socket && socket.connected && targetPeerSocketId) {
+        socket.emit('call-text-message', { targetSocketId: targetPeerSocketId, text: text });
+      }
     });
 
     // DM Modal Handlers

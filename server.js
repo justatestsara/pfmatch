@@ -136,6 +136,24 @@ io.on('connection', (socket) => {
     }
   });
 
+  // In-Call Text Message Relay
+  socket.on('call-text-message', (data) => {
+    if (data && data.targetSocketId) {
+      io.to(data.targetSocketId).emit('call-text-message', {
+        text: data.text
+      });
+    }
+  });
+
+  // In-Call Gift Relay
+  socket.on('call-gift', (data) => {
+    if (data && data.targetSocketId) {
+      io.to(data.targetSocketId).emit('call-gift', {
+        giftType: data.giftType
+      });
+    }
+  });
+
   // Call Termination
   socket.on('end-call', (data) => {
     if (data && data.targetSocketId) {
